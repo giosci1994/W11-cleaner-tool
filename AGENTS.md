@@ -43,10 +43,11 @@ In `docs/decisioni.md`.
 
 ## Da verificare
 - Come gli altri progetti firmano l'exe e gestiscono SmartScreen (la firma si decide più avanti).
+- **Falsi avvisi sui driver**: i driver di Windows (fornitore Microsoft) hanno la data convenzionale 21/06/2006 e risultano «più vecchi di un anno» (visto nella build 1 sul runner): da trattare come «driver di Windows», non come avviso.
 - Sul PC vero: la regola della RAM (XMP), la chiave `HistoricalCaptureEnabled` della Game Bar, le frequenze dei monitor, la dimensione dell'exe.
 - Quali API usare per ogni funzione (da guardare nel codice dei progetti MIT quando si scrive la funzione).
 
 ## Il registro dei lavori
 | Data | Cosa si è fatto | Cosa si è scoperto |
 |---|---|---|
-| 18/11/2026 | Creato lo scheletro; piano in preparazione | — |
+| 18/11/2026 | Creato lo scheletro; piano approvato; v0.1 in sola lettura, repository privato, prima build su Actions | il codice non si compila sulla macchina di sviluppo: gli errori si vedono solo nel log di Actions |
