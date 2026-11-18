@@ -1,0 +1,40 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Test
+        run: dotnet test tests/W11CleanerTool.Tests/W11CleanerTool.Tests.csproj -c Release
+
+      - name: Publish x64 e ARM64, SHA256
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          ./scripts/publish.ps1 -Version $version
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          prerelease: ${{ startsWith(github.ref_name, 'v0.') }}
+          files: |
+            artifacts/W11-cleaner-tool-x64.exe
+            artifacts/W11-cleaner-tool-arm64.exe
+            artifacts/SHA256SUMS.txt
+            artifacts/VERIFY.ps1

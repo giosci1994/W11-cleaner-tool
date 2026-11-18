@@ -1,0 +1,133 @@
+<Window x:Class="W11CleanerTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="W11-cleaner-tool"
+        Width="1000" Height="720" MinWidth="760" MinHeight="520"
+        WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <Style x:Key="CardButton" TargetType="Button">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="14,12" />
+      <Setter Property="Margin" Value="0,0,0,10" />
+    </Style>
+  </Window.Resources>
+
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- Testata -->
+    <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
+      <StackPanel DockPanel.Dock="Left" Orientation="Vertical">
+        <TextBlock Text="W11-cleaner-tool" FontSize="24" FontWeight="SemiBold" />
+        <TextBlock x:Name="SubtitleText" Opacity="0.75" Text="Controlla il PC. Questa versione legge e basta: non cambia niente." />
+      </StackPanel>
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+        <Button x:Name="ElevateButton" Content="Riavvia come amministratore" Margin="0,0,12,0" Padding="10,6"
+                Click="ElevateButton_Click" Visibility="Collapsed"
+                ToolTip="Serve per leggere alcune cose, per esempio i file dei crash (minidump)." />
+        <CheckBox x:Name="ExpertToggle" Content="Modalità Esperto" VerticalAlignment="Center"
+                  Checked="ExpertToggle_Changed" Unchecked="ExpertToggle_Changed"
+                  ToolTip="Mostra i dettagli tecnici di ogni controllo." />
+      </StackPanel>
+    </DockPanel>
+
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- Le schede grandi della modalità Base -->
+      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <Button x:Name="AllButton" Style="{StaticResource CardButton}" Click="AllButton_Click">
+            <StackPanel>
+              <TextBlock Text="Controlla tutto" FontSize="16" FontWeight="SemiBold" />
+              <TextBlock Text="Fa tutti i controlli qui sotto, uno dopo l'altro." TextWrapping="Wrap" Opacity="0.8" />
+            </StackPanel>
+          </Button>
+          <Button x:Name="GamingButton" Style="{StaticResource CardButton}" Click="GamingButton_Click">
+            <StackPanel>
+              <TextBlock Text="Gaming" FontSize="16" FontWeight="SemiBold" />
+              <TextBlock Text="Modalità gioco, scheda video, monitor, piano energetico." TextWrapping="Wrap" Opacity="0.8" />
+            </StackPanel>
+          </Button>
+          <Button x:Name="HardwareButton" Style="{StaticResource CardButton}" Click="HardwareButton_Click">
+            <StackPanel>
+              <TextBlock Text="RAM e driver" FontSize="16" FontWeight="SemiBold" />
+              <TextBlock Text="La RAM va alla sua velocità? Ci sono driver vecchi o dispositivi con errori?" TextWrapping="Wrap" Opacity="0.8" />
+            </StackPanel>
+          </Button>
+          <Button x:Name="CrashButton" Style="{StaticResource CardButton}" Click="CrashButton_Click">
+            <StackPanel>
+              <TextBlock Text="Problemi e crash" FontSize="16" FontWeight="SemiBold" />
+              <TextBlock Text="Schermate blu e app che si chiudono, con un rapporto da dare a un'IA." TextWrapping="Wrap" Opacity="0.8" />
+            </StackPanel>
+          </Button>
+          <TextBlock Margin="2,8,2,0" TextWrapping="Wrap" Opacity="0.7"
+                     Text="Pulizia, ottimizzazione e le altre funzioni arriveranno dopo, sempre con anteprima, punto di ripristino e annulla." />
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- I risultati -->
+      <Grid Grid.Column="2">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="ResultsHeading" Grid.Row="0" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"
+                   Text="Scegli un controllo a sinistra." TextWrapping="Wrap" />
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <ItemsControl x:Name="ResultsList">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Border Margin="0,0,0,8" Padding="12" CornerRadius="6" BorderThickness="1"
+                          Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                          BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                    <Grid>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}" FontSize="18"
+                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" VerticalAlignment="Top" Margin="0,2,0,0"
+                                 ToolTip="{Binding StatusText}" />
+                      <StackPanel Grid.Column="1">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                        <TextBox Text="{Binding Detail, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,6,0,0"
+                                 FontFamily="Consolas" FontSize="12" BorderThickness="0" Background="Transparent"
+                                 Visibility="{Binding ShowDetail, Converter={StaticResource BoolToVisibility}}" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBox x:Name="ReportText" Visibility="Collapsed" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                     FontFamily="Consolas" FontSize="12" MinHeight="200" MaxHeight="400" Margin="0,8,0,0"
+                     VerticalScrollBarVisibility="Auto" />
+          </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel x:Name="ReportButtons" Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0" Visibility="Collapsed">
+          <Button Content="Copia il rapporto per l'IA" Padding="12,6" Margin="0,0,10,0" Click="CopyReport_Click" />
+          <Button Content="Salva il rapporto…" Padding="12,6" Click="SaveReport_Click" />
+        </StackPanel>
+      </Grid>
+    </Grid>
+
+    <TextBlock x:Name="StatusText" Grid.Row="2" Margin="0,12,0,0" Opacity="0.75" TextWrapping="Wrap" />
+  </Grid>
+</Window>

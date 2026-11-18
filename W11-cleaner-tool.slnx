@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/W11CleanerTool/W11CleanerTool.csproj" />
+  <Project Path="src/W11CleanerTool.Core/W11CleanerTool.Core.csproj" />
+  <Project Path="tests/W11CleanerTool.Tests/W11CleanerTool.Tests.csproj" />
+</Solution>
