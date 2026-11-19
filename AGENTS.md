@@ -1,6 +1,6 @@
 # W11-cleaner-tool · scheletro
 
-Ultimo aggiornamento: 18/11/2026 · dall'ingegnere, dopo la prima build (v0.1, sola lettura).
+Ultimo aggiornamento: 19/11/2026 · dall'ingegnere, dopo README inglese, landing page EN/IT e social preview.
 
 <!-- Questo file va nel repository, che diventerà pubblico: niente nomi propri, email, percorsi di macchine, token, chiavi o password. Le note private di lavoro stanno fuori dal repository. -->
 
@@ -24,10 +24,16 @@ Ultimo aggiornamento: 18/11/2026 · dall'ingegnere, dopo la prima build (v0.1, s
 - `scripts/publish.ps1`: exe x64 e ARM64 self-contained in file singolo, `SHA256SUMS.txt`. `scripts/VERIFY.ps1`: il controllo per chi scarica.
 - `.github/workflows/build.yml` (push su `main`, PR, a mano) · `release.yml` (tag `v*`, release segnata «pre-release» finché la versione è 0.x).
 - `docs/decisioni.md` (le scelte) · `docs/piano.md` (il piano approvato) · `docs/ricerca-progetti-simili.md`.
+- **Vetrina** (come gli altri repository del proprietario, design system Arborae: fondo `#070b0a`, verde `#00b585`, Space Grotesk / Inter / JetBrains Mono):
+  - `README.md`: **solo in inglese** (niente seconda metà in italiano).
+  - `docs/index.html` + `docs/css/style.css` + `docs/js/main.js`: la landing page, **una lingua per volta** con l'interruttore EN/IT (attributi `data-en` / `data-it`; `?lang=it` nell'indirizzo; la scelta resta nel browser). Sarà su `giosci1994.github.io/W11-cleaner-tool/` quando GitHub Pages sarà attivo (Source: `main`, cartella `/docs`, come gli altri).
+  - `docs/social-preview.html` (sorgente) → `docs/social-preview.png` 1280×640, da caricare a mano in Settings › Social preview.
 
 ## Come si fa
 - **Una build**: push su `main` → Actions «build» → artifact `W11-cleaner-tool-ci.<numero>` con i due exe e `SHA256SUMS.txt`.
 - **Una release**: aggiornare `VersionPrefix` in `Directory.Build.props`, commit, `git tag vX.Y.Z` e push del tag → Actions «release».
+- **La social preview**: dopo aver cambiato `docs/social-preview.html`, `firefox --headless --window-size=1280,640 --screenshot docs/social-preview.png docs/social-preview.html` (Firefox snap: copiare prima l'html in una cartella non nascosta della home).
+- **Una scritta nuova nella landing**: sempre tutte e due le lingue (`data-en` e `data-it`), e il testo inglese anche dentro l'elemento.
 - **Prima di ogni commit**: il controllo anti-dati del proprietario deve dire «Nessun dato trovato». Nei test i percorsi finti si compongono a pezzi (`UsersC + "mario"`) per non farlo scattare.
 - **Le icone** (Segoe Fluent Icons) nel codice si scrivono come escape `\uE73E`, mai come carattere.
 - **Una funzione nuova che modifica il sistema**: anteprima, punto di ripristino, registro, annulla (`docs/piano.md`, punto 4); «funzionante» solo dopo la prova sul PC.
@@ -46,8 +52,12 @@ In `docs/decisioni.md`.
 - **Falsi avvisi sui driver**: i driver di Windows (fornitore Microsoft) hanno la data convenzionale 21/06/2006 e risultano «più vecchi di un anno» (visto nella build 1 sul runner): da trattare come «driver di Windows», non come avviso.
 - Sul PC vero: la regola della RAM (XMP), la chiave `HistoricalCaptureEnabled` della Game Bar, le frequenze dei monitor, la dimensione dell'exe.
 - Quali API usare per ogni funzione (da guardare nel codice dei progetti MIT quando si scrive la funzione).
+- GitHub Pages su un repository privato: secondo la documentazione di GitHub serve un piano a pagamento (Pro); con il piano gratuito si attiva quando il repository diventa pubblico, con l'ok del proprietario.
+- I badge del README (shields.io, download, licenza) funzionano solo quando il repository è pubblico.
+- La landing e la social preview mostrano un'**illustrazione** dell'app: le schermate vere si aggiungono dopo la prova sul PC.
 
 ## Il registro dei lavori
 | Data | Cosa si è fatto | Cosa si è scoperto |
 |---|---|---|
 | 18/11/2026 | Creato lo scheletro; piano approvato; v0.1 in sola lettura, repository privato, prima build su Actions | il codice non si compila sulla macchina di sviluppo: gli errori si vedono solo nel log di Actions |
+| 19/11/2026 | README solo in inglese; landing page EN/IT e social preview nello stile degli altri repository | Pages non attivabile finché il repository è privato (piano gratuito) |

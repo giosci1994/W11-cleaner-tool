@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en"
+  data-en-title="W11-cleaner-tool — Clean and optimize Windows 11, simply"
+  data-it-title="W11-cleaner-tool — Pulire e ottimizzare Windows 11, in modo semplice">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070b0a" />
+  <meta name="description"
+    content="A simple cleaning and optimization tool for Windows 11: a few big buttons in Base mode, every technical detail in Expert mode. One portable exe for x64 and ARM64."
+    data-en="A simple cleaning and optimization tool for Windows 11: a few big buttons in Base mode, every technical detail in Expert mode. One portable exe for x64 and ARM64."
+    data-it="Un tool semplice di pulizia e ottimizzazione per Windows 11: pochi pulsanti grandi in modalità Base, tutti i dettagli tecnici in modalità Esperto. Un exe portatile per x64 e ARM64." />
+  <title>W11-cleaner-tool — Clean and optimize Windows 11, simply</title>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="W11-cleaner-tool — Clean and optimize Windows 11, simply" />
+  <meta property="og:description"
+    content="Checks your PC and explains every result in plain words. Base and Expert mode, x64 and ARM64, SHA256-verified releases." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://giosci1994.github.io/W11-cleaner-tool/" />
+  <meta property="og:image" content="https://giosci1994.github.io/W11-cleaner-tool/social-preview.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%B9%3C/text%3E%3C/svg%3E" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css" />
+  <script src="./js/main.js" defer></script>
+</head>
+
+<body>
+  <div class="bg">
+    <div class="bg-grid"></div>
+  </div>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <div class="brand">
+        <a class="brand-main" href="#top" aria-label="W11-cleaner-tool">
+          <span class="brand-mark" aria-hidden="true">🧹</span>
+          <span>W11-cleaner-tool</span>
+        </a>
+      </div>
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features" data-en="Features" data-it="Funzioni">Features</a>
+        <a href="#modes" data-en="Modes" data-it="Modalità">Modes</a>
+        <a href="#download" data-en="Download" data-it="Scarica">Download</a>
+        <a href="#roadmap" data-en="Roadmap" data-it="Prossimi passi">Roadmap</a>
+      </nav>
+
+      <div class="nav-cta">
+        <button id="lang-toggle" class="btn ghost small lang-btn" type="button" aria-label="Passa all'italiano">IT</button>
+        <a class="btn primary small" href="https://github.com/giosci1994/W11-cleaner-tool" target="_blank"
+          rel="noreferrer">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top" class="container">
+    <section class="hero">
+      <div class="hero-left">
+        <div class="kicker">
+          <span class="dot"></span>
+          <span data-en="Windows 11 · Open source · MIT" data-it="Windows 11 · Open source · MIT">Windows 11 · Open source · MIT</span>
+        </div>
+
+        <h1 data-en="Check your PC. <span class=&quot;accent-text&quot;>Plain words</span>, no surprises."
+          data-it="Controlla il PC. <span class=&quot;accent-text&quot;>Parole semplici</span>, nessuna sorpresa.">
+          Check your PC. <span class="accent-text">Plain words</span>, no surprises.
+        </h1>
+
+        <p class="lead"
+          data-en="A cleaning and optimization tool for Windows 11 Home and Pro. A few big buttons in <b>Base mode</b>, every registry key and value in <b>Expert mode</b>. One portable exe, nothing to install."
+          data-it="Un tool di pulizia e ottimizzazione per Windows 11 Home e Pro. Pochi pulsanti grandi in <b>modalità Base</b>, ogni chiave di registro e ogni valore in <b>modalità Esperto</b>. Un exe portatile, niente da installare.">
+          A cleaning and optimization tool for Windows 11 Home and Pro. A few big buttons in <b>Base mode</b>,
+          every registry key and value in <b>Expert mode</b>. One portable exe, nothing to install.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn primary" href="#download" data-en="Download" data-it="Scarica">Download</a>
+          <a class="btn ghost" href="https://github.com/giosci1994/W11-cleaner-tool" target="_blank"
+            rel="noreferrer" data-en="View on GitHub" data-it="Vedi su GitHub">View on GitHub</a>
+        </div>
+
+        <div class="status-note">
+          <span aria-hidden="true">🔒</span>
+          <span data-en="<b>Version 0.1 is read-only.</b> It checks the PC and changes nothing. Cleaning and optimization come next, always with preview, restore point and undo."
+            data-it="<b>La versione 0.1 legge e basta.</b> Controlla il PC e non cambia niente. Pulizia e ottimizzazione arrivano dopo, sempre con anteprima, punto di ripristino e annulla.">
+            <b>Version 0.1 is read-only.</b> It checks the PC and changes nothing. Cleaning and optimization
+            come next, always with preview, restore point and undo.
+          </span>
+        </div>
+
+        <div class="topics" role="list" aria-label="Topics">
+          <span class="pill" role="listitem">windows-11</span>
+          <span class="pill" role="listitem">dotnet-10</span>
+          <span class="pill" role="listitem">wpf</span>
+          <span class="pill" role="listitem">x64</span>
+          <span class="pill" role="listitem">arm64</span>
+          <span class="pill" role="listitem">sha256</span>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="window app" aria-hidden="true">
+          <div class="win-bar">
+            <span class="win-title">W11-cleaner-tool</span>
+          </div>
+          <div class="app-body">
+            <div class="app-side">
+              <div class="app-card">
+                <b data-en="Check everything" data-it="Controlla tutto">Check everything</b>
+                <span data-en="All the checks below" data-it="Tutti i controlli qui sotto">All the checks below</span>
+              </div>
+              <div class="app-card active">
+                <b>Gaming</b>
+                <span data-en="Game Mode, GPU, monitor" data-it="Modalità gioco, GPU, monitor">Game Mode, GPU, monitor</span>
+              </div>
+              <div class="app-card">
+                <b data-en="RAM and drivers" data-it="RAM e driver">RAM and drivers</b>
+                <span data-en="XMP, old drivers" data-it="XMP, driver vecchi">XMP, old drivers</span>
+              </div>
+              <div class="app-card">
+                <b data-en="Problems and crashes" data-it="Problemi e crash">Problems and crashes</b>
+                <span data-en="Report for an AI" data-it="Rapporto per un'IA">Report for an AI</span>
+              </div>
+            </div>
+            <div class="app-main">
+              <div class="app-top">
+                <span>Gaming</span>
+                <span class="switch"><i></i><span data-en="Expert mode" data-it="Modalità Esperto">Expert mode</span></span>
+              </div>
+              <div class="result">
+                <span class="g" style="color: var(--ok)">✓</span>
+                <div><b data-en="Game Mode" data-it="Modalità gioco">Game Mode</b><span data-en="It is on." data-it="È attiva.">It is on.</span></div>
+              </div>
+              <div class="result">
+                <span class="g" style="color: var(--warn)">!</span>
+                <div><b data-en="Monitor refresh rate" data-it="Frequenza del monitor">Monitor refresh rate</b><span
+                    data-en="60 Hz, but this monitor can do 144 Hz. Change it in Settings › Display."
+                    data-it="60 Hz, ma questo monitor arriva a 144 Hz. Cambiala in Impostazioni › Schermo.">60 Hz, but this monitor can do 144 Hz. Change it in Settings › Display.</span></div>
+              </div>
+              <div class="result">
+                <span class="g" style="color: var(--bad)">✕</span>
+                <div><b data-en="System drive space" data-it="Spazio sul disco di sistema">System drive space</b><span
+                    data-en="Only 6 GB free on C:. Windows needs room for updates."
+                    data-it="Solo 6 GB liberi su C:. A Windows serve spazio per gli aggiornamenti.">Only 6 GB free on C:. Windows needs room for updates.</span></div>
+              </div>
+              <div class="result">
+                <span class="g" style="color: var(--win)">i</span>
+                <div><b data-en="Power plan" data-it="Piano energetico">Power plan</b><span data-en="Balanced." data-it="Bilanciato.">Balanced.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="mock-caption" data-en="illustration · real screenshots after the first test on a PC"
+          data-it="illustrazione · le schermate vere dopo la prima prova su un PC">illustration · real screenshots after the first test on a PC</p>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-head reveal">
+        <span class="section-label" data-en="// what it checks" data-it="// cosa controlla">// what it checks</span>
+        <h2 data-en="Three cards, one click each" data-it="Tre schede, un clic ciascuna">Three cards, one click each</h2>
+        <p data-en="Every result says what it means and what to do. The interface of the app is in Italian for now."
+          data-it="Ogni risultato dice cosa vuol dire e cosa fare. L'interfaccia dell'app per ora è in italiano.">Every result says what it means and what to do. The interface of the app is in Italian for now.</p>
+      </div>
+
+      <div class="cards-grid">
+        <article class="card reveal">
+          <span class="card-icon">🎮</span>
+          <h3>Gaming</h3>
+          <p data-en="Is Windows set up for games?" data-it="Windows è pronto per giocare?">Is Windows set up for games?</p>
+          <ul>
+            <li data-en="Game Mode and GPU scheduling" data-it="Modalità gioco e pianificazione GPU">Game Mode and GPU scheduling</li>
+            <li data-en="Power plan and monitor refresh rate" data-it="Piano energetico e frequenza del monitor">Power plan and monitor refresh rate</li>
+            <li data-en="Graphics driver, Game Bar recording" data-it="Driver video, registrazione della Game Bar">Graphics driver, Game Bar recording</li>
+            <li data-en="Free space, pending reboot" data-it="Spazio libero, riavvio in sospeso">Free space, pending reboot</li>
+          </ul>
+        </article>
+
+        <article class="card reveal">
+          <span class="card-icon">🧠</span>
+          <h3 data-en="RAM and drivers" data-it="RAM e driver">RAM and drivers</h3>
+          <p data-en="Is the hardware running at full speed?" data-it="L'hardware va a piena velocità?">Is the hardware running at full speed?</p>
+          <ul>
+            <li data-en="RAM speed vs. rated speed (XMP / EXPO / DOCP)" data-it="Velocità della RAM e quella dichiarata (XMP / EXPO / DOCP)">RAM speed vs. rated speed (XMP / EXPO / DOCP)</li>
+            <li data-en="Devices with errors" data-it="Dispositivi con errori">Devices with errors</li>
+            <li data-en="Graphics, network and audio drivers with their date" data-it="Driver di video, rete e audio con la loro data">Graphics, network and audio drivers with their date</li>
+          </ul>
+        </article>
+
+        <article class="card reveal">
+          <span class="card-icon">🩺</span>
+          <h3 data-en="Problems and crashes" data-it="Problemi e crash">Problems and crashes</h3>
+          <p data-en="What went wrong in the last 30 days?" data-it="Cosa è andato storto negli ultimi 30 giorni?">What went wrong in the last 30 days?</p>
+          <ul>
+            <li data-en="Blue screens and sudden shutdowns" data-it="Schermate blu e spegnimenti improvvisi">Blue screens and sudden shutdowns</li>
+            <li data-en="Hardware errors (WHEA), apps that crash or hang" data-it="Errori hardware (WHEA), app che si chiudono o si bloccano">Hardware errors (WHEA), apps that crash or hang</li>
+            <li data-en="An anonymized report to paste into an AI" data-it="Un rapporto anonimo da incollare in un'IA">An anonymized report to paste into an AI</li>
+          </ul>
+        </article>
+
+        <article class="card reveal">
+          <span class="card-icon">🔒</span>
+          <h3 data-en="Read-only, for now" data-it="Per ora, solo lettura">Read-only, for now</h3>
+          <p data-en="Version 0.1 only reads registry, WMI, event logs and Windows APIs. It changes nothing on the PC."
+            data-it="La versione 0.1 legge soltanto registro, WMI, registri eventi e API di Windows. Non cambia niente sul PC.">Version 0.1 only reads registry, WMI, event logs and Windows APIs. It changes nothing on the PC.</p>
+        </article>
+
+        <article class="card reveal">
+          <span class="card-icon">🕶️</span>
+          <h3 data-en="No personal data" data-it="Nessun dato personale">No personal data</h3>
+          <p data-en="The crash report drops the user name, PC name, domain and profile paths. No telemetry, no network calls."
+            data-it="Il rapporto dei crash toglie nome utente, nome del PC, dominio e percorsi del profilo. Niente telemetria, nessuna connessione.">The crash report drops the user name, PC name, domain and profile paths. No telemetry, no network calls.</p>
+        </article>
+
+        <article class="card reveal">
+          <span class="card-icon">📦</span>
+          <h3 data-en="One exe, x64 and ARM64" data-it="Un exe, x64 e ARM64">One exe, x64 and ARM64</h3>
+          <p data-en="Self-contained: .NET is inside. Starts without admin rights. Built by GitHub Actions, with SHA256 for every file."
+            data-it="Autonomo: .NET è già dentro. Parte senza diritti di amministratore. Lo costruisce GitHub Actions, con lo SHA256 di ogni file.">Self-contained: .NET is inside. Starts without admin rights. Built by GitHub Actions, with SHA256 for every file.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="modes" class="section">
+      <div class="section-head reveal">
+        <span class="section-label" data-en="// two modes" data-it="// due modalità">// two modes</span>
+        <h2 data-en="Simple by default, detailed on demand" data-it="Semplice di base, dettagliato quando serve">Simple by default, detailed on demand</h2>
+        <p data-en="One switch at the top. The app remembers your choice."
+          data-it="Un interruttore in alto. L'app ricorda la scelta.">One switch at the top. The app remembers your choice.</p>
+      </div>
+
+      <div class="modes">
+        <article class="mode reveal">
+          <span class="tag" data-en="Base mode" data-it="Modalità Base">Base mode</span>
+          <h3 data-en="For everyone" data-it="Per tutti">For everyone</h3>
+          <p data-en="A few big cards and plain words. Each result gets a colour and one sentence on what to do."
+            data-it="Poche schede grandi e parole semplici. Ogni risultato ha un colore e una frase su cosa fare.">A few big cards and plain words. Each result gets a colour and one sentence on what to do.</p>
+          <div class="legend">
+            <span data-en="✅ all good" data-it="✅ tutto a posto">✅ all good</span>
+            <span data-en="⚠️ worth a look" data-it="⚠️ da guardare">⚠️ worth a look</span>
+            <span data-en="❌ needs fixing" data-it="❌ da sistemare">❌ needs fixing</span>
+          </div>
+        </article>
+
+        <article class="mode expert reveal">
+          <span class="tag" data-en="Expert mode" data-it="Modalità Esperto">Expert mode</span>
+          <h3 data-en="For those who want to know why" data-it="Per chi vuole sapere il perché">For those who want to know why</h3>
+          <p data-en="The same checks, with the registry key, the current value and the version behind every result."
+            data-it="Gli stessi controlli, con la chiave di registro, il valore attuale e la versione dietro ogni risultato.">The same checks, with the registry key, the current value and the version behind every result.</p>
+<pre><code>HKCU\Software\Microsoft\GameBar
+  AutoGameModeEnabled = 1</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <section id="download" class="section">
+      <div class="section-head reveal">
+        <span class="section-label" data-en="// download" data-it="// scarica">// download</span>
+        <h2 data-en="Download and verify" data-it="Scarica e controlla">Download and verify</h2>
+        <p data-en="Nothing to install. Check the SHA256 before opening the exe."
+          data-it="Niente da installare. Controlla lo SHA256 prima di aprire l'exe.">Nothing to install. Check the SHA256 before opening the exe.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step reveal">
+          <span class="step-n">1</span>
+          <h3 data-en="Pick your exe" data-it="Scegli l'exe">Pick your exe</h3>
+          <p data-en="<code>W11-cleaner-tool-x64.exe</code> for Intel and AMD (almost every PC), <code>W11-cleaner-tool-arm64.exe</code> for Snapdragon."
+            data-it="<code>W11-cleaner-tool-x64.exe</code> per Intel e AMD (quasi tutti i PC), <code>W11-cleaner-tool-arm64.exe</code> per Snapdragon."><code>W11-cleaner-tool-x64.exe</code> for Intel and AMD (almost every PC), <code>W11-cleaner-tool-arm64.exe</code> for Snapdragon.</p>
+        </div>
+        <div class="step reveal">
+          <span class="step-n">2</span>
+          <h3 data-en="Verify it" data-it="Controllalo">Verify it</h3>
+          <p data-en="Put <code>SHA256SUMS.txt</code> and <code>VERIFY.ps1</code> in the same folder and run the script below."
+            data-it="Metti <code>SHA256SUMS.txt</code> e <code>VERIFY.ps1</code> nella stessa cartella e lancia lo script qui sotto.">Put <code>SHA256SUMS.txt</code> and <code>VERIFY.ps1</code> in the same folder and run the script below.</p>
+        </div>
+        <div class="step reveal">
+          <span class="step-n">3</span>
+          <h3 data-en="Open it" data-it="Aprilo">Open it</h3>
+          <p data-en="The exe is not signed yet: if SmartScreen warns you, choose <b>More info → Run anyway</b>."
+            data-it="L'exe non è ancora firmato: se SmartScreen avvisa, scegli <b>Ulteriori informazioni → Esegui comunque</b>.">The exe is not signed yet: if SmartScreen warns you, choose <b>More info → Run anyway</b>.</p>
+        </div>
+      </div>
+
+      <div class="quickstart reveal">
+<pre><code data-en="powershell -ExecutionPolicy Bypass -File .\VERIFY.ps1
+# or by hand, then compare with SHA256SUMS.txt:
+Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256"
+  data-it="powershell -ExecutionPolicy Bypass -File .\VERIFY.ps1
+# oppure a mano, poi confronta con SHA256SUMS.txt:
+Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256">powershell -ExecutionPolicy Bypass -File .\VERIFY.ps1
+# or by hand, then compare with SHA256SUMS.txt:
+Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
+        <p class="hint" data-en="Requires Windows 11 Home or Pro, 64-bit. No administrator rights needed; Expert mode can restart the app as administrator to read the minidumps."
+          data-it="Serve Windows 11 Home o Pro, a 64 bit. Non servono i diritti di amministratore; la modalità Esperto può riavviare l'app come amministratore per leggere i minidump.">Requires Windows 11 Home or Pro, 64-bit. No administrator rights needed; Expert mode can restart the app as administrator to read the minidumps.</p>
+      </div>
+
+      <div class="cta-box reveal">
+        <div>
+          <h3 data-en="Latest release" data-it="Ultima versione">Latest release</h3>
+          <p data-en="Both exe, <code>SHA256SUMS.txt</code> and <code>VERIFY.ps1</code>, on GitHub Releases."
+            data-it="I due exe, <code>SHA256SUMS.txt</code> e <code>VERIFY.ps1</code>, nelle Releases di GitHub.">Both exe, <code>SHA256SUMS.txt</code> and <code>VERIFY.ps1</code>, on GitHub Releases.</p>
+        </div>
+        <a class="btn primary" href="https://github.com/giosci1994/W11-cleaner-tool/releases" target="_blank"
+          rel="noreferrer" data-en="Go to Releases" data-it="Vai alle Releases">Go to Releases</a>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section">
+      <div class="section-head reveal">
+        <span class="section-label" data-en="// roadmap" data-it="// prossimi passi">// roadmap</span>
+        <h2 data-en="One step at a time, each tested on a real PC" data-it="Un passo alla volta, ognuno provato su un PC vero">One step at a time, each tested on a real PC</h2>
+        <p data-en="Every feature that changes the system comes with a preview (before → after), a restore point, a change log and undo."
+          data-it="Ogni funzione che modifica il sistema arriva con anteprima (prima → dopo), punto di ripristino, registro delle modifiche e annulla.">Every feature that changes the system comes with a preview (before → after), a restore point, a change log and undo.</p>
+      </div>
+
+      <ol class="roadmap reveal">
+        <li class="done"><span class="n">✓ 1</span><div><b data-en="Read-only checks" data-it="Controlli in sola lettura">Read-only checks</b>
+            <p data-en="Gaming checklist, RAM and drivers, crash report for an AI." data-it="Checklist gaming, RAM e driver, rapporto dei crash per un'IA.">Gaming checklist, RAM and drivers, crash report for an AI.</p></div></li>
+        <li><span class="n">2</span><div><b data-en="No sleep during downloads" data-it="Niente sospensione durante i download">No sleep during downloads</b>
+            <p data-en="Only while the app is open, without touching your settings." data-it="Solo mentre l'app è aperta, senza toccare le impostazioni.">Only while the app is open, without touching your settings.</p></div></li>
+        <li><span class="n">3</span><div><b data-en="Cleaning" data-it="Pulizia">Cleaning</b>
+            <p data-en="Temporary files, caches, recycle bin. An estimate first." data-it="File temporanei, cache, cestino. Prima la stima.">Temporary files, caches, recycle bin. An estimate first.</p></div></li>
+        <li><span class="n">4</span><div><b data-en="Optimization" data-it="Ottimizzazione">Optimization</b>
+            <p data-en="Startup programs and power plan." data-it="Programmi all'avvio e piano energetico.">Startup programs and power plan.</p></div></li>
+        <li><span class="n">5</span><div><b>Debloat</b>
+            <p data-en="Remove what you don't need, with undo." data-it="Togliere quello che non serve, con annulla.">Remove what you don't need, with undo.</p></div></li>
+        <li><span class="n">6</span><div><b data-en="Duplicates in quarantine" data-it="Duplicati in quarantena">Duplicates in quarantine</b>
+            <p data-en="Moved aside, never deleted straight away." data-it="Spostati da parte, mai cancellati subito.">Moved aside, never deleted straight away.</p></div></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="container footer">
+    <div class="footer-left">
+      <span aria-hidden="true">🧹</span>
+      <span>© <span id="year">2026</span> giosci1994 · <span data-en="MIT License" data-it="Licenza MIT">MIT License</span></span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/giosci1994/W11-cleaner-tool" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://github.com/giosci1994/W11-cleaner-tool/releases" target="_blank" rel="noreferrer">Releases</a>
+      <a href="https://buymeacoffee.com/giosci1994u" target="_blank" rel="noreferrer">☕ Buy Me a Coffee</a>
+    </div>
+  </footer>
+</body>
+
+</html>

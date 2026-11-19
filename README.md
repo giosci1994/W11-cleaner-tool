@@ -1,41 +1,148 @@
-# W11-cleaner-tool
+# 🧹 W11-cleaner-tool
 
-Tool di **pulizia e ottimizzazione per Windows 11** (Home e Pro), con una schermata semplice e pochi pulsanti.
+**A simple cleaning and optimization tool for Windows 11 (Home and Pro): a few big buttons in
+Base mode, every technical detail in Expert mode. One portable exe for x64 and ARM64, with
+SHA256-verified releases.**
 
-- **Modalità Base**: poche schede grandi, risultati con ✅ ⚠️ ❌ e una frase semplice su cosa fare.
-- **Modalità Esperto**: gli stessi controlli con i dettagli tecnici (chiavi di registro, valori, versioni).
+### 🌐 [giosci1994.github.io/W11-cleaner-tool](https://giosci1994.github.io/W11-cleaner-tool/)
 
-> **Stato: versione 0.1, solo lettura.** Questa versione controlla il PC e **non cambia niente**. Pulizia, ottimizzazione e le altre funzioni arriveranno dopo, sempre con anteprima, punto di ripristino e annulla.
+<p align="center">
+  <a href="https://github.com/giosci1994/W11-cleaner-tool/actions/workflows/build.yml"><img src="https://github.com/giosci1994/W11-cleaner-tool/actions/workflows/build.yml/badge.svg" alt="Build" /></a>
+  <a href="https://github.com/giosci1994/W11-cleaner-tool/releases/latest"><img src="https://img.shields.io/github/v/release/giosci1994/W11-cleaner-tool?include_prereleases&color=00b585" alt="Release" /></a>
+  <img src="https://img.shields.io/github/downloads/giosci1994/W11-cleaner-tool/total?color=34d399" alt="Downloads" />
+  <img src="https://img.shields.io/badge/platform-Windows%2011%20x64%20%7C%20ARM64-0078d4?logo=windows&logoColor=white" alt="Windows 11 x64 | ARM64" />
+  <img src="https://img.shields.io/badge/.NET-10-512bd4" alt=".NET 10" />
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/giosci1994/W11-cleaner-tool" alt="License" /></a>
+  <a href="https://buymeacoffee.com/giosci1994u"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee" /></a>
+</p>
 
-## Cosa fa oggi
-| Scheda | Cosa controlla |
+<p align="center">
+  <img src="docs/social-preview.png" width="800" alt="W11-cleaner-tool — checks your PC, changes nothing until you say so" />
+</p>
+
+> **Status: version 0.1, read-only.** This version checks the PC and **changes nothing**.
+> Cleaning, optimization and the other features will come later, always with a preview, a
+> restore point and undo.
+
+> **Note:** the app's interface is in Italian for now. The labels quoted below are the ones you
+> will see on screen, with an English translation in brackets.
+
+## Contents
+
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Download and verify](#-download-and-verify)
+- [Usage](#-usage)
+- [Privacy and safety](#-privacy-and-safety)
+- [Roadmap](#-roadmap)
+- [Development](#-development)
+- [Support](#-support)
+- [License](#-license)
+
+## ✨ Features
+
+Two modes, one switch at the top: **«Modalità Esperto»** (Expert mode). The choice is remembered.
+
+- **Base mode** — a few big cards and plain words. Every result is ✅ / ⚠️ / ❌ with one sentence
+  on what it means and what to do.
+- **Expert mode** — the same checks with the technical details: registry keys, values, versions.
+
+| Card | What it checks |
 |---|---|
-| **Gaming** | Modalità gioco, pianificazione GPU accelerata, piano energetico, frequenza dei monitor, integrità della memoria, registrazione in background della Game Bar, driver della scheda video, spazio sul disco di sistema, riavvio in sospeso |
-| **RAM e driver** | velocità della RAM rispetto a quella dichiarata (XMP / EXPO / DOCP, indicativo), dispositivi con errori, driver di video, rete e audio con la loro data |
-| **Problemi e crash** | schermate blu, spegnimenti improvvisi, errori hardware (WHEA), app che si chiudono o si bloccano, minidump degli ultimi 30 giorni; **rapporto da copiare o salvare per un'IA**, senza nome utente, nome del PC e percorsi personali |
+| **Gaming** | Game Mode, hardware-accelerated GPU scheduling, power plan, monitor refresh rate vs. the maximum, memory integrity (reported only), Game Bar background recording, graphics driver, free space on the system drive, pending reboot |
+| **RAM e driver** (RAM and drivers) | RAM speed vs. the rated speed (XMP / EXPO / DOCP, indicative), devices with errors, graphics, network and audio drivers with their date |
+| **Problemi e crash** (Problems and crashes) | Blue screens, unexpected shutdowns, hardware errors (WHEA), apps that crash or hang, minidumps of the last 30 days, plus a **report to copy or save for an AI**, without user name, PC name or personal paths |
 
-## Scaricare e controllare
-1. Dalla pagina **Releases** scarica l'exe giusto:
-   - `W11-cleaner-tool-x64.exe` per i PC con processore Intel o AMD (quasi tutti);
-   - `W11-cleaner-tool-arm64.exe` per i PC con processore ARM (Snapdragon).
-2. Scarica anche `SHA256SUMS.txt` e `VERIFY.ps1` nella stessa cartella.
-3. Controlla che i file siano quelli originali, in PowerShell:
+## ✅ Requirements
+
+- **Windows 11** Home or Pro, **x64** (Intel / AMD) or **ARM64** (Snapdragon).
+- Nothing to install: the exe is self-contained and already includes .NET.
+- No administrator rights needed. In Expert mode, **«Riavvia come amministratore»** (Restart as
+  administrator) also reads the minidumps.
+
+## 📦 Download and verify
+
+1. From the **[Releases](https://github.com/giosci1994/W11-cleaner-tool/releases)** page, download
+   the right exe:
+   - `W11-cleaner-tool-x64.exe` for Intel or AMD processors (almost every PC);
+   - `W11-cleaner-tool-arm64.exe` for ARM processors (Snapdragon).
+2. Download `SHA256SUMS.txt` and `VERIFY.ps1` into the same folder.
+3. Check that the files are the original ones, in PowerShell:
+
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\VERIFY.ps1
    ```
-   oppure a mano: `Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256` e confronta il codice con `SHA256SUMS.txt`.
-4. L'exe non è firmato: alla prima apertura Windows SmartScreen può avvisare. Scegli «Ulteriori informazioni» › «Esegui comunque».
 
-Non serve installare niente: l'exe contiene già .NET. Parte senza diritti di amministratore; in modalità Esperto c'è «Riavvia come amministratore» per leggere anche i minidump.
+   or by hand: `Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256`, then compare the hash
+   with `SHA256SUMS.txt`.
 
-## Costruire
-L'exe lo costruisce **GitHub Actions** (`.github/workflows/`):
-- a ogni push su `main`: test, exe x64 e ARM64 e `SHA256SUMS.txt` come artifact della build;
-- a ogni tag `v*`: una Release con gli exe, `SHA256SUMS.txt` e `VERIFY.ps1`.
+> **Windows SmartScreen:** the exe is not code-signed, so Windows may show a warning the first
+> time. Click **More info → Run anyway**.
 
-Su Windows con il .NET 10 SDK: `./scripts/publish.ps1` (i file finiscono in `artifacts/`).
+## 📖 Usage
 
-Struttura: `src/W11CleanerTool` (interfaccia WPF) · `src/W11CleanerTool.Core` (i controlli, senza interfaccia) · `tests/` · `docs/` (decisioni, piano, ricerca).
+1. Open the exe. On the left there are the cards; on the right, the results.
+2. Click **«Controlla tutto»** (Check everything) or a single card: **Gaming**, **RAM e driver**,
+   **Problemi e crash**.
+3. Read the results: ✅ all good, ⚠️ worth a look, ❌ needs fixing. Each one says what to do.
+4. In **Problemi e crash**, **«Copia il rapporto per l'IA»** (Copy the report for the AI) or
+   **«Salva il rapporto…»** (Save the report) gives you an anonymized text to paste into an AI
+   assistant.
 
-## Licenza
-[MIT](LICENSE). Nessun codice è copiato da altri progetti; le idee e i problemi noti degli altri tool sono in `docs/ricerca-progetti-simili.md`.
+Settings live in `%LOCALAPPDATA%\W11-cleaner-tool\settings.json`.
+
+## 🔐 Privacy and safety
+
+- **Read-only** in version 0.1: registry, WMI, event logs and Windows APIs are only read.
+- The crash report removes the user name, the PC name, the domain and the profile paths.
+- No telemetry, no network calls, no installation of apps.
+- Every future feature that changes the system will have a **preview** (before → after), a
+  **restore point**, a **change log** and **undo** — and is called "working" only after a test on
+  a real PC.
+
+## 🗺️ Roadmap
+
+1. ✅ Read-only checks: gaming checklist, RAM and drivers, crash report for an AI.
+2. No sleep while downloads are running (only while the app is open).
+3. Cleaning: temporary files, caches, recycle bin — an estimate first.
+4. Optimization: startup programs, power plan.
+5. Debloat.
+6. Duplicate files moved to quarantine, never deleted straight away.
+
+## 💻 Development
+
+The exe is built by **GitHub Actions** on a Windows runner:
+
+- every push to `main` and every pull request: tests, x64 and ARM64 exe and `SHA256SUMS.txt` as a
+  build artifact → [`.github/workflows/build.yml`](.github/workflows/build.yml);
+- every `v*` tag: a release (marked pre-release while the version is 0.x) with both exe,
+  `SHA256SUMS.txt` and `VERIFY.ps1` → [`.github/workflows/release.yml`](.github/workflows/release.yml).
+
+On Windows with the **.NET 10 SDK**:
+
+```powershell
+dotnet test tests/W11CleanerTool.Tests/W11CleanerTool.Tests.csproj
+./scripts/publish.ps1          # exe and SHA256SUMS.txt end up in artifacts/
+```
+
+### Project structure
+
+```
+src/W11CleanerTool/         WPF interface (.NET 10, Fluent theme, light/dark from Windows)
+src/W11CleanerTool.Core/    the checks, no UI: gaming, hardware, crash report, anonymizer
+tests/                      rule and anonymizer tests, smoke tests on the Windows runner
+scripts/                    publish.ps1 (x64 + ARM64, SHA256) and VERIFY.ps1
+docs/                       landing page, social preview, decisions, plan, research (Italian)
+```
+
+The project notes in `docs/` (decisions, plan, research on similar tools) are written in Italian.
+
+## ☕ Support
+
+If this tool is useful to you, you can support its development:
+**[buymeacoffee.com/giosci1994u](https://buymeacoffee.com/giosci1994u)** ☕
+
+## 📄 License
+
+[MIT](LICENSE). No code is copied from other projects; ideas and known issues of similar tools are
+collected in [`docs/ricerca-progetti-simili.md`](docs/ricerca-progetti-simili.md).
