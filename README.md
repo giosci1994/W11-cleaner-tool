@@ -36,6 +36,7 @@ SHA256-verified releases.**
 - [Privacy and safety](#-privacy-and-safety)
 - [Roadmap](#-roadmap)
 - [Development](#-development)
+- [Changelog](#-changelog)
 - [Support](#-support)
 - [License](#-license)
 
@@ -136,6 +137,10 @@ docs/                       landing page, social preview, decisions, plan, resea
 ```
 
 The project notes in `docs/` (decisions, plan, research on similar tools) are written in Italian.
+
+## 📝 Changelog
+
+Every version and what changed: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## ☕ Support
 
