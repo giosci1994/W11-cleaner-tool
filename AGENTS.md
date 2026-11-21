@@ -1,8 +1,8 @@
 # W11-cleaner-tool · scheletro
 
-Ultimo aggiornamento: 19/11/2026 · dall'ingegnere, dopo README inglese, landing page EN/IT e social preview.
+Ultimo aggiornamento: 21/11/2026 · repository pubblico, GitHub Pages attivo, social preview caricata.
 
-<!-- Questo file va nel repository, che diventerà pubblico: niente nomi propri, email, percorsi di macchine, token, chiavi o password. Le note private di lavoro stanno fuori dal repository. -->
+<!-- Questo file sta nel repository, che è pubblico: niente nomi propri, email, percorsi di macchine, token, chiavi o password. Le note private di lavoro stanno fuori dal repository. -->
 
 ## Che cos'è
 - Tool di **pulizia e ottimizzazione per Windows 11**, sul modello di Microsoft PC Manager: schermata semplice con pochi pulsanti (**modalità Base**) e **modalità Esperto**.
@@ -26,8 +26,8 @@ Ultimo aggiornamento: 19/11/2026 · dall'ingegnere, dopo README inglese, landing
 - `docs/decisioni.md` (le scelte) · `docs/piano.md` (il piano approvato) · `docs/ricerca-progetti-simili.md`.
 - **Vetrina** (come gli altri repository del proprietario, design system Arborae: fondo `#070b0a`, verde `#00b585`, Space Grotesk / Inter / JetBrains Mono):
   - `README.md`: **solo in inglese** (niente seconda metà in italiano).
-  - `docs/index.html` + `docs/css/style.css` + `docs/js/main.js`: la landing page, **una lingua per volta** con l'interruttore EN/IT (attributi `data-en` / `data-it`; `?lang=it` nell'indirizzo; la scelta resta nel browser). Sarà su `giosci1994.github.io/W11-cleaner-tool/` quando GitHub Pages sarà attivo (Source: `main`, cartella `/docs`, come gli altri).
-  - `docs/social-preview.html` (sorgente) → `docs/social-preview.png` 1280×640, da caricare a mano in Settings › Social preview.
+  - `docs/index.html` + `docs/css/style.css` + `docs/js/main.js`: la landing page, **una lingua per volta** con l'interruttore EN/IT (attributi `data-en` / `data-it`; `?lang=it` nell'indirizzo; la scelta resta nel browser). È su `giosci1994.github.io/W11-cleaner-tool/` (GitHub Pages: Source `main`, cartella `/docs`, come gli altri).
+  - `docs/social-preview.html` (sorgente) → `docs/social-preview.png` 1280×640, caricata a mano in Settings › Social preview (si ricarica a mano quando cambia).
 
 ## Come si fa
 - **Una build**: push su `main` → Actions «build» → artifact `W11-cleaner-tool-ci.<numero>` con i due exe e `SHA256SUMS.txt`.
@@ -40,7 +40,7 @@ Ultimo aggiornamento: 19/11/2026 · dall'ingegnere, dopo README inglese, landing
 
 ## Cosa non toccare
 - **Visibilità e impostazioni di sicurezza del repository**: le decide solo il proprietario.
-- Nessun dato personale in file, commit, workflow e release: il repository diventerà pubblico **con tutta la storia**.
+- Nessun dato personale in file, commit, workflow e release: il repository è pubblico **con tutta la storia**.
 - Codice di altri progetti: solo MIT, con l'attribuzione. GPL e AGPL si leggono solo per le idee.
 - Niente privacy/telemetria, niente installazione di app con winget (`docs/decisioni.md`).
 
@@ -52,8 +52,6 @@ In `docs/decisioni.md`.
 - **Falsi avvisi sui driver**: i driver di Windows (fornitore Microsoft) hanno la data convenzionale 21/06/2006 e risultano «più vecchi di un anno» (visto nella build 1 sul runner): da trattare come «driver di Windows», non come avviso.
 - Sul PC vero: la regola della RAM (XMP), la chiave `HistoricalCaptureEnabled` della Game Bar, le frequenze dei monitor, la dimensione dell'exe.
 - Quali API usare per ogni funzione (da guardare nel codice dei progetti MIT quando si scrive la funzione).
-- GitHub Pages su un repository privato: secondo la documentazione di GitHub serve un piano a pagamento (Pro); con il piano gratuito si attiva quando il repository diventa pubblico, con l'ok del proprietario.
-- I badge del README (shields.io, download, licenza) funzionano solo quando il repository è pubblico.
 - La landing e la social preview mostrano un'**illustrazione** dell'app: le schermate vere si aggiungono dopo la prova sul PC.
 
 ## Il registro dei lavori
@@ -61,3 +59,4 @@ In `docs/decisioni.md`.
 |---|---|---|
 | 18/11/2026 | Creato lo scheletro; piano approvato; v0.1 in sola lettura, repository privato, prima build su Actions | il codice non si compila sulla macchina di sviluppo: gli errori si vedono solo nel log di Actions |
 | 19/11/2026 | README solo in inglese; landing page EN/IT e social preview nello stile degli altri repository | Pages non attivabile finché il repository è privato (piano gratuito) |
+| 21/11/2026 | Controllo dei dati su tutta la storia, repository **pubblico**, Pages attivo, social preview caricata | con il repository pubblico i badge del README funzionano |
