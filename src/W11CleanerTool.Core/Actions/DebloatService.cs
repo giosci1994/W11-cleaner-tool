@@ -139,7 +139,8 @@ public sealed class DebloatService
             }
         }
 
-        return trimmed.Contains("GamingServices", StringComparison.OrdinalIgnoreCase);
+        return trimmed.Contains("GamingServices", StringComparison.OrdinalIgnoreCase) ||
+               trimmed.StartsWith("Microsoft.Xbox", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Elenca solo le app bloatware dell'elenco curato effettivamente installate.</summary>
