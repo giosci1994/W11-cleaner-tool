@@ -37,12 +37,42 @@ public static class Heuristics
         };
     }
 
+    /// <summary>
+    /// Riconosce i driver di sistema di Windows: Microsoft usa la data convenzionale 21/06/2006
+    /// così i driver inclusi in Windows non prevalgono su quelli dei produttori.
+    /// </summary>
+    public static bool IsWindowsSystemDriver(DateTime? driverDate, string? provider)
+    {
+        if (driverDate is null || string.IsNullOrWhiteSpace(provider))
+        {
+            return false;
+        }
+
+        string trimmed = provider.Trim();
+        bool isMicrosoft = trimmed.Equals("Microsoft", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("Microsoft ", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("Microsoft-", StringComparison.OrdinalIgnoreCase);
+        return isMicrosoft && driverDate.Value.Year == 2006;
+    }
+
     /// <summary>Un driver più vecchio di 12 mesi merita uno sguardo; non vuol dire che sia sbagliato.</summary>
     public static CheckStatus DriverAge(DateTime? driverDate, DateTime today)
+        => DriverAge(driverDate, null, today);
+
+    /// <summary>
+    /// Un driver più vecchio di 12 mesi merita uno sguardo; i driver di sistema Microsoft (2006)
+    /// sono normali e vengono segnati come <see cref="CheckStatus.Ok"/>.
+    /// </summary>
+    public static CheckStatus DriverAge(DateTime? driverDate, string? provider, DateTime today)
     {
         if (driverDate is null)
         {
             return CheckStatus.Info;
+        }
+
+        if (IsWindowsSystemDriver(driverDate, provider))
+        {
+            return CheckStatus.Ok;
         }
 
         return driverDate.Value < today.AddMonths(-12) ? CheckStatus.Warning : CheckStatus.Ok;
@@ -104,4 +134,32 @@ public static class Heuristics
 
     /// <summary>Byte in GB leggibili.</summary>
     public static string Gigabytes(long bytes) => $"{bytes / 1024d / 1024d / 1024d:0.#} GB";
+
+    /// <summary>Byte in formato leggibile (B, KB, MB, GB).</summary>
+    public static string FormatBytes(long bytes)
+    {
+        if (bytes < 0)
+        {
+            bytes = 0;
+        }
+
+        if (bytes < 1024)
+        {
+            return $"{bytes} B";
+        }
+
+        double kb = bytes / 1024d;
+        if (kb < 1024)
+        {
+            return $"{kb:0.#} KB";
+        }
+
+        double mb = kb / 1024d;
+        if (mb < 1024)
+        {
+            return $"{mb:0.#} MB";
+        }
+
+        return $"{mb / 1024d:0.##} GB";
+    }
 }

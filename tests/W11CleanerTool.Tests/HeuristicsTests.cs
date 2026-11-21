@@ -27,6 +27,35 @@ public class HeuristicsTests
         => Assert.Equal(CheckStatus.Info, Heuristics.DriverAge(null, new DateTime(2026, 11, 18)));
 
     [Theory]
+    [InlineData("Microsoft", 2006, 6, 21)]
+    [InlineData("Microsoft Corporation", 2006, 6, 21)]
+    [InlineData("Microsoft", 2006, 1, 1)]
+    public void DriverAge_Microsoft2006IsWindowsDriverOk(string provider, int year, int month, int day)
+    {
+        var date = new DateTime(year, month, day);
+        Assert.True(Heuristics.IsWindowsSystemDriver(date, provider));
+        Assert.Equal(CheckStatus.Ok, Heuristics.DriverAge(date, provider, new DateTime(2026, 11, 21)));
+    }
+
+    [Theory]
+    [InlineData("Realtek", 2006, 6, 21)]
+    [InlineData("NVIDIA", 2024, 1, 1)]
+    [InlineData("Microsoft", 2020, 5, 1)]
+    public void DriverAge_ThirdPartyOrNon2006OldDriverIsWarning(string provider, int year, int month, int day)
+    {
+        var date = new DateTime(year, month, day);
+        Assert.False(Heuristics.IsWindowsSystemDriver(date, provider));
+        Assert.Equal(CheckStatus.Warning, Heuristics.DriverAge(date, provider, new DateTime(2026, 11, 21)));
+    }
+
+    [Theory]
+    [InlineData(512L, "512 B")]
+    [InlineData(2048L, "2 KB")]
+    [InlineData(5L * 1024 * 1024, "5 MB")]
+    public void FormatBytes_FormatsExpected(long bytes, string expected)
+        => Assert.Equal(expected, Heuristics.FormatBytes(bytes));
+
+    [Theory]
     [InlineData(5L, 100L, CheckStatus.Problem)]
     [InlineData(12L, 100L, CheckStatus.Warning)]
     [InlineData(40L, 100L, CheckStatus.Ok)]

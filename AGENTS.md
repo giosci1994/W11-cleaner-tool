@@ -1,6 +1,6 @@
 # W11-cleaner-tool · scheletro
 
-Ultimo aggiornamento: 21/11/2026 · repository pubblico, GitHub Pages attivo, social preview caricata.
+Ultimo aggiornamento: 21/11/2026 · repository pubblico, Pages attivo, completata la v0.2.0 (fix driver Microsoft 2006, niente sospensione, sicurezze/storico/quarantena, pulizia, ottimizzazione, debloat, duplicati e UI WPF Base/Esperto).
 
 <!-- Questo file sta nel repository, che è pubblico: niente nomi propri, email, percorsi di macchine, token, chiavi o password. Le note private di lavoro stanno fuori dal repository. -->
 
@@ -15,12 +15,19 @@ Ultimo aggiornamento: 21/11/2026 · repository pubblico, GitHub Pages attivo, so
 - **Mai password, token o chiavi** nei file: eventuali segreti dei workflow stanno in GitHub Secrets.
 
 ## La mappa
-- `src/W11CleanerTool/`: l'interfaccia **WPF** (.NET 10, tema Fluent con `ThemeMode="System"`). `MainWindow.xaml(.cs)`: schede Base a sinistra, risultati a destra, interruttore «Modalità Esperto» (salvato in `%LOCALAPPDATA%\W11-cleaner-tool\settings.json`). `app.manifest`: `asInvoker`.
-- `src/W11CleanerTool.Core/`: i controlli, senza interfaccia. Ogni controllo restituisce `CheckResult` (Area, Title, Status, Explanation per Base, Detail per Esperto).
+- `src/W11CleanerTool/`: l'interfaccia **WPF** (.NET 10, tema Fluent con `ThemeMode="System"`). `app.manifest`: `asInvoker`.
+  - `MainWindow.xaml(.cs)`: schede Base/Esperto a sinistra (controlli in sola lettura + *Pulisci*, *Ottimizza*, *Debloat*, *Duplicati*, *Storico e Quarantena*), interruttore *Modalità Esperto* (salvato in `%LOCALAPPDATA%\W11-cleaner-tool\settings.json`) e interruttore *Niente sospensione (download)* (`KeepAwakeService`, rilasciato in `OnClosed`).
+  - `PreviewDialog.xaml(.cs)`: modale di conferma «prima → dopo» con avvisi amministratore/Protezione sistema e checkbox *Crea punto di ripristino prima di applicare*.
+  - `ViewModels.cs` · `ResultItem.cs` · `Settings.cs`.
+- `src/W11CleanerTool.Core/`: logica senza interfaccia.
   - `Checks/GamingChecks.cs` · `Checks/HardwareChecks.cs` · `Checks/CrashReport.cs`: **solo lettura** (registro, WMI, registri eventi, API di Windows).
-  - `Heuristics.cs`: le regole pure (RAM, età dei driver, spazio, frequenza): **si provano nei test**.
+  - `Heuristics.cs`: le regole pure (RAM, età dei driver con riconoscimento `IsWindowsSystemDriver` per driver Microsoft 2006, spazio, frequenza, `FormatBytes`): **si provano nei test**.
   - `Anonymizer.cs`: toglie nome utente, nome del PC, dominio e profili dal rapporto dei crash.
-- `tests/W11CleanerTool.Tests/`: test delle regole e dell'anonimizzazione, più `SmokeTests` che fanno girare i controlli veri sul runner Windows (i risultati sono nel log della build).
+  - `KeepAwakeService.cs`: `SetThreadExecutionState` temporaneo per impedire la sospensione finché l'app è aperta.
+  - `Safety/`: `PlannedChange.cs` (modello «prima → dopo»), `ActionLog.cs` (`%LOCALAPPDATA%\W11-cleaner-tool\history.json`), `RestorePointService.cs` (WMI `SystemRestore.CreateRestorePoint`, non attiva mai Protezione sistema da sola), `QuarantineService.cs` (`%LOCALAPPDATA%\W11-cleaner-tool\quarantine\<sessione>\manifest.json` con SHA256, ripristino e pulizia oltre 30 giorni).
+  - `Actions/`: `ActionExecutionResult.cs`, `CleanupService.cs`, `OptimizationService.cs`, `DebloatService.cs` (elenco curato + protezioni pacchetti critici, niente telemetria né winget), `DuplicateFinderService.cs` (dimensione → SHA256 4 KB → SHA256 completo, solo quarantena), `UndoCoordinator.cs`.
+- `tests/W11CleanerTool.Tests/`: test delle regole, dell'anonimizzazione, dei servizi di sicurezza e azione (`ActionLogTests`, `CleanupServiceTests`, `DebloatServiceTests`, `DuplicateFinderServiceTests`, `OptimizationServiceTests`, `QuarantineServiceTests`), più `SmokeTests` sul runner Windows.
+- `CHANGELOG.md`: registro delle versioni (`0.1.0`, `0.2.0`).
 - `scripts/publish.ps1`: exe x64 e ARM64 self-contained in file singolo, `SHA256SUMS.txt`. `scripts/VERIFY.ps1`: il controllo per chi scarica.
 - `.github/workflows/build.yml` (push su `main`, PR, a mano) · `release.yml` (tag `v*`, release segnata «pre-release» finché la versione è 0.x).
 - `docs/decisioni.md` (le scelte) · `docs/piano.md` (il piano approvato) · `docs/ricerca-progetti-simili.md`.
@@ -49,9 +56,8 @@ In `docs/decisioni.md`.
 
 ## Da verificare
 - Come gli altri progetti firmano l'exe e gestiscono SmartScreen (la firma si decide più avanti).
-- **Falsi avvisi sui driver**: i driver di Windows (fornitore Microsoft) hanno la data convenzionale 21/06/2006 e risultano «più vecchi di un anno» (visto nella build 1 sul runner): da trattare come «driver di Windows», non come avviso.
-- Sul PC vero: la regola della RAM (XMP), la chiave `HistoricalCaptureEnabled` della Game Bar, le frequenze dei monitor, la dimensione dell'exe.
-- Quali API usare per ogni funzione (da guardare nel codice dei progetti MIT quando si scrive la funzione).
+- **Falsi avvisi sui driver**: corretto in v0.2.0 (`Heuristics.IsWindowsSystemDriver` riconosce i driver Microsoft con data convenzionale 2006 come `Ok` / «driver di Windows»); da verificare sul PC reale.
+- Sul PC vero: la regola della RAM (XMP), la chiave `HistoricalCaptureEnabled` della Game Bar, le frequenze dei monitor, la dimensione dell'exe, e tutte le funzioni operative v0.2.0 (pulizia, ottimizzazione, debloat, duplicati, punto di ripristino, annulla e quarantena).
 - La landing e la social preview mostrano un'**illustrazione** dell'app: le schermate vere si aggiungono dopo la prova sul PC.
 
 ## Il registro dei lavori
@@ -60,3 +66,4 @@ In `docs/decisioni.md`.
 | 18/11/2026 | Creato lo scheletro; piano approvato; v0.1 in sola lettura, repository privato, prima build su Actions | il codice non si compila sulla macchina di sviluppo: gli errori si vedono solo nel log di Actions |
 | 19/11/2026 | README solo in inglese; landing page EN/IT e social preview nello stile degli altri repository | Pages non attivabile finché il repository è privato (piano gratuito) |
 | 21/11/2026 | Controllo dei dati su tutta la storia, repository **pubblico**, Pages attivo, social preview caricata | con il repository pubblico i badge del README funzionano |
+| 21/11/2026 | v0.2.0: fix driver Microsoft 2006, `KeepAwakeService`, `Safety/` (`ActionLog`, `RestorePointService`, `QuarantineService`), `Actions/` (pulizia, ottimizzazione, debloat, duplicati, `UndoCoordinator`), modale `PreviewDialog` e UI WPF completa Base/Esperto con Storico e Quarantena | tutte le modifiche passano da `PlannedChange` + anteprima + storico JSON; gli elementi oltre 30 giorni in quarantena non si eliminano da soli senza conferma |

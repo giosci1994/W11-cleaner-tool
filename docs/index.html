@@ -91,10 +91,10 @@
 
         <div class="status-note">
           <span aria-hidden="true">🔒</span>
-          <span data-en="<b>Version 0.1 is read-only.</b> It checks the PC and changes nothing. Cleaning and optimization come next, always with preview, restore point and undo."
-            data-it="<b>La versione 0.1 legge e basta.</b> Controlla il PC e non cambia niente. Pulizia e ottimizzazione arrivano dopo, sempre con anteprima, punto di ripristino e annulla.">
-            <b>Version 0.1 is read-only.</b> It checks the PC and changes nothing. Cleaning and optimization
-            come next, always with preview, restore point and undo.
+          <span data-en="<b>Version 0.2.0 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat, duplicate quarantine and no-sleep — always with preview, restore point, history and undo."
+            data-it="<b>Versione 0.2.0 (pre-release).</b> Controlli in sola lettura più pulizia, ottimizzazione, debloat, quarantena duplicati e niente sospensione — sempre con anteprima, punto di ripristino, storico e annulla.">
+            <b>Version 0.2.0 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat,
+            duplicate quarantine and no-sleep — always with preview, restore point, history and undo.
           </span>
         </div>
 
@@ -167,10 +167,10 @@
 
     <section id="features" class="section">
       <div class="section-head reveal">
-        <span class="section-label" data-en="// what it checks" data-it="// cosa controlla">// what it checks</span>
-        <h2 data-en="Three cards, one click each" data-it="Tre schede, un clic ciascuna">Three cards, one click each</h2>
-        <p data-en="Every result says what it means and what to do. The interface of the app is in Italian for now."
-          data-it="Ogni risultato dice cosa vuol dire e cosa fare. L'interfaccia dell'app per ora è in italiano.">Every result says what it means and what to do. The interface of the app is in Italian for now.</p>
+        <span class="section-label" data-en="// features" data-it="// cosa fa">// features</span>
+        <h2 data-en="Diagnostics and safe actions, one step at a time" data-it="Controlli e modifiche sicure, un passo alla volta">Diagnostics and safe actions, one step at a time</h2>
+        <p data-en="Every check and action says what it means and what changes. The interface of the app is in Italian for now."
+          data-it="Ogni controllo e ogni azione dice cosa vuol dire e cosa cambia. L'interfaccia dell'app per ora è in italiano.">Every check and action says what it means and what changes. The interface of the app is in Italian for now.</p>
       </div>
 
       <div class="cards-grid">
@@ -209,17 +209,21 @@
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">🔒</span>
-          <h3 data-en="Read-only, for now" data-it="Per ora, solo lettura">Read-only, for now</h3>
-          <p data-en="Version 0.1 only reads registry, WMI, event logs and Windows APIs. It changes nothing on the PC."
-            data-it="La versione 0.1 legge soltanto registro, WMI, registri eventi e API di Windows. Non cambia niente sul PC.">Version 0.1 only reads registry, WMI, event logs and Windows APIs. It changes nothing on the PC.</p>
+          <span class="card-icon">🧹</span>
+          <h3 data-en="Clean, optimize, debloat &amp; duplicates" data-it="Pulisci, ottimizza, debloat e duplicati">Clean, optimize, debloat &amp; duplicates</h3>
+          <p data-en="Safe maintenance tools with a temporary no-sleep switch." data-it="Strumenti di manutenzione sicuri con interruttore temporaneo niente sospensione.">Safe maintenance tools with a temporary no-sleep switch.</p>
+          <ul>
+            <li data-en="Temp files, browser caches, Windows Update cache, Recycle Bin" data-it="Temporanei, cache browser, cache Windows Update e Cestino">Temp files, browser caches, Windows Update cache, Recycle Bin</li>
+            <li data-en="Reversible startup programs and power plan switching" data-it="Programmi all'avvio e piano energetico reversibili">Reversible startup programs and power plan switching</li>
+            <li data-en="Conservative UWP debloat and duplicate files moved to quarantine" data-it="Debloat UWP sicuro e file duplicati spostati in quarantena">Conservative UWP debloat and duplicate files moved to quarantine</li>
+          </ul>
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">🕶️</span>
-          <h3 data-en="No personal data" data-it="Nessun dato personale">No personal data</h3>
-          <p data-en="The crash report drops the user name, PC name, domain and profile paths. No telemetry, no network calls."
-            data-it="Il rapporto dei crash toglie nome utente, nome del PC, dominio e percorsi del profilo. Niente telemetria, nessuna connessione.">The crash report drops the user name, PC name, domain and profile paths. No telemetry, no network calls.</p>
+          <span class="card-icon">🔒</span>
+          <h3 data-en="Preview, undo &amp; no personal data" data-it="Anteprima, annulla e nessun dato personale">Preview, undo &amp; no personal data</h3>
+          <p data-en="Every change starts with a before → after preview, an optional restore point, JSON history with per-session undo, and 30-day quarantine. Crash reports drop user/PC names; no telemetry or network calls."
+            data-it="Ogni modifica parte con anteprima prima → dopo, punto di ripristino facoltativo, storico JSON con annulla per voce o sessione e quarantena a 30 giorni. I rapporti tolgono nome utente e PC; nessuna telemetria o chiamata di rete.">Every change starts with a before → after preview, an optional restore point, JSON history with per-session undo, and 30-day quarantine. Crash reports drop user/PC names; no telemetry or network calls.</p>
         </article>
 
         <article class="card reveal">
@@ -327,15 +331,15 @@ Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
       <ol class="roadmap reveal">
         <li class="done"><span class="n">✓ 1</span><div><b data-en="Read-only checks" data-it="Controlli in sola lettura">Read-only checks</b>
             <p data-en="Gaming checklist, RAM and drivers, crash report for an AI." data-it="Checklist gaming, RAM e driver, rapporto dei crash per un'IA.">Gaming checklist, RAM and drivers, crash report for an AI.</p></div></li>
-        <li><span class="n">2</span><div><b data-en="No sleep during downloads" data-it="Niente sospensione durante i download">No sleep during downloads</b>
+        <li class="done"><span class="n">✓ 2</span><div><b data-en="No sleep during downloads" data-it="Niente sospensione durante i download">No sleep during downloads</b>
             <p data-en="Only while the app is open, without touching your settings." data-it="Solo mentre l'app è aperta, senza toccare le impostazioni.">Only while the app is open, without touching your settings.</p></div></li>
-        <li><span class="n">3</span><div><b data-en="Cleaning" data-it="Pulizia">Cleaning</b>
+        <li class="done"><span class="n">✓ 3</span><div><b data-en="Cleaning" data-it="Pulizia">Cleaning</b>
             <p data-en="Temporary files, caches, recycle bin. An estimate first." data-it="File temporanei, cache, cestino. Prima la stima.">Temporary files, caches, recycle bin. An estimate first.</p></div></li>
-        <li><span class="n">4</span><div><b data-en="Optimization" data-it="Ottimizzazione">Optimization</b>
+        <li class="done"><span class="n">✓ 4</span><div><b data-en="Optimization" data-it="Ottimizzazione">Optimization</b>
             <p data-en="Startup programs and power plan." data-it="Programmi all'avvio e piano energetico.">Startup programs and power plan.</p></div></li>
-        <li><span class="n">5</span><div><b>Debloat</b>
+        <li class="done"><span class="n">✓ 5</span><div><b>Debloat</b>
             <p data-en="Remove what you don't need, with undo." data-it="Togliere quello che non serve, con annulla.">Remove what you don't need, with undo.</p></div></li>
-        <li><span class="n">6</span><div><b data-en="Duplicates in quarantine" data-it="Duplicati in quarantena">Duplicates in quarantine</b>
+        <li class="done"><span class="n">✓ 6</span><div><b data-en="Duplicates in quarantine" data-it="Duplicati in quarantena">Duplicates in quarantine</b>
             <p data-en="Moved aside, never deleted straight away." data-it="Spostati da parte, mai cancellati subito.">Moved aside, never deleted straight away.</p></div></li>
       </ol>
     </section>

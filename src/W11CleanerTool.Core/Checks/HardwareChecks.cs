@@ -91,8 +91,10 @@ public static class HardwareChecks
         foreach (var r in rows.Where(r => !string.IsNullOrEmpty(r.Str("DeviceName"))))
         {
             string name = r.Str("DeviceName");
+            string provider = r.Str("DriverProviderName");
             DateTime? date = Heuristics.ParseWmiDate(r.Str("DriverDate"));
-            CheckStatus status = Heuristics.DriverAge(date, DateTime.Today);
+            bool isWindowsDriver = Heuristics.IsWindowsSystemDriver(date, provider);
+            CheckStatus status = Heuristics.DriverAge(date, provider, DateTime.Today);
             string kind = r.Str("DeviceClass") switch
             {
                 "DISPLAY" => "Video",
@@ -101,10 +103,12 @@ public static class HardwareChecks
                 _ => r.Str("DeviceClass"),
             };
             string when = date?.ToString("dd/MM/yyyy") ?? "data sconosciuta";
-            string explanation = status == CheckStatus.Warning
-                ? $"{kind} · {name}: driver del {when}, ha più di un anno. Controlla sul sito del produttore."
-                : $"{kind} · {name}: driver del {when}.";
-            results.Add(new CheckResult(Area, $"Driver {kind.ToLowerInvariant()}", status, explanation, $"{name} · {r.Str("DriverProviderName")} · versione {r.Str("DriverVersion")} · {when}"));
+            string explanation = isWindowsDriver
+                ? $"{kind} · {name}: driver di Windows ({when})."
+                : status == CheckStatus.Warning
+                    ? $"{kind} · {name}: driver del {when}, ha più di un anno. Controlla sul sito del produttore."
+                    : $"{kind} · {name}: driver del {when}.";
+            results.Add(new CheckResult(Area, $"Driver {kind.ToLowerInvariant()}", status, explanation, $"{name} · {provider} · versione {r.Str("DriverVersion")} · {when}"));
         }
 
         if (results.Count == 0)

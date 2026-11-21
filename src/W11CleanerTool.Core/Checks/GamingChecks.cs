@@ -172,13 +172,17 @@ public static class GamingChecks
         foreach (var row in Wmi.Query("SELECT Name, DriverVersion, DriverDate, AdapterCompatibility FROM Win32_VideoController"))
         {
             string name = row.Str("Name");
+            string provider = row.Str("AdapterCompatibility");
             DateTime? date = Heuristics.ParseWmiDate(row.Str("DriverDate"));
-            CheckStatus status = Heuristics.DriverAge(date, DateTime.Today);
+            bool isWindowsDriver = Heuristics.IsWindowsSystemDriver(date, provider);
+            CheckStatus status = Heuristics.DriverAge(date, provider, DateTime.Today);
             string when = date?.ToString("dd/MM/yyyy") ?? "data sconosciuta";
-            string explanation = status == CheckStatus.Warning
-                ? $"Il driver di {name} è del {when}: ha più di un anno. Controlla sul sito del produttore se ce n'è uno nuovo."
-                : $"Il driver di {name} è del {when}.";
-            results.Add(new CheckResult(Area, "Driver della scheda video", status, explanation, $"{name} · {row.Str("AdapterCompatibility")} · versione {row.Str("DriverVersion")} · {when}"));
+            string explanation = isWindowsDriver
+                ? $"Il driver di {name} è un driver di Windows ({when})."
+                : status == CheckStatus.Warning
+                    ? $"Il driver di {name} è del {when}: ha più di un anno. Controlla sul sito del produttore se ce n'è uno nuovo."
+                    : $"Il driver di {name} è del {when}.";
+            results.Add(new CheckResult(Area, "Driver della scheda video", status, explanation, $"{name} · {provider} · versione {row.Str("DriverVersion")} · {when}"));
         }
 
         return results;

@@ -2,14 +2,20 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="W11-cleaner-tool"
-        Width="1000" Height="720" MinWidth="760" MinHeight="520"
+        Width="1100" Height="760" MinWidth="840" MinHeight="560"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
     <Style x:Key="CardButton" TargetType="Button">
       <Setter Property="HorizontalAlignment" Value="Stretch" />
-      <Setter Property="HorizontalContentAlignment" Value="Left" />
-      <Setter Property="Padding" Value="14,12" />
-      <Setter Property="Margin" Value="0,0,0,10" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="12,10" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+    <Style x:Key="NavSectionHeader" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="Margin" Value="2,10,0,6" />
     </Style>
   </Window.Resources>
 
@@ -21,110 +27,612 @@
     </Grid.RowDefinitions>
 
     <!-- Testata -->
-    <DockPanel Grid.Row="0" Margin="0,0,0,16" LastChildFill="False">
-      <StackPanel DockPanel.Dock="Left" Orientation="Vertical">
+    <Grid Grid.Row="0" Margin="0,0,0,16">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,16,0">
         <TextBlock Text="W11-cleaner-tool" FontSize="24" FontWeight="SemiBold" />
-        <TextBlock x:Name="SubtitleText" Opacity="0.75" Text="Controlla il PC. Questa versione legge e basta: non cambia niente." />
+        <TextBlock x:Name="SubtitleText" Opacity="0.75" TextWrapping="Wrap"
+                   Text="Controlla, pulisci e ottimizza Windows 11. Ogni modifica passa prima dall'anteprima ed è tracciata nello storico." />
       </StackPanel>
-      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+
+      <WrapPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+        <CheckBox x:Name="KeepAwakeToggle" Content="Niente sospensione (download)"
+                  VerticalAlignment="Center" Margin="0,0,14,0"
+                  Checked="KeepAwakeToggle_Changed" Unchecked="KeepAwakeToggle_Changed"
+                  ToolTip="Impedisce al PC di andare in sospensione finché questa finestra è aperta, senza cambiare le impostazioni permanenti di Windows." />
         <Button x:Name="ElevateButton" Content="Riavvia come amministratore" Margin="0,0,12,0" Padding="10,6"
                 Click="ElevateButton_Click" Visibility="Collapsed"
-                ToolTip="Serve per leggere alcune cose, per esempio i file dei crash (minidump)." />
+                ToolTip="Serve per leggere i minidump dei crash, creare punti di ripristino o pulire le cartelle di sistema." />
         <CheckBox x:Name="ExpertToggle" Content="Modalità Esperto" VerticalAlignment="Center"
                   Checked="ExpertToggle_Changed" Unchecked="ExpertToggle_Changed"
-                  ToolTip="Mostra i dettagli tecnici di ogni controllo." />
-      </StackPanel>
-    </DockPanel>
+                  ToolTip="Mostra i dettagli tecnici (chiavi di registro, percorsi, valori prima → dopo)." />
+      </WrapPanel>
+    </Grid>
 
     <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="290" />
         <ColumnDefinition Width="20" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <!-- Le schede grandi della modalità Base -->
+      <!-- Barra laterale di navigazione -->
       <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
         <StackPanel>
+          <TextBlock Text="CONTROLLI (SOLA LETTURA)" Style="{StaticResource NavSectionHeader}" Margin="2,0,0,6" />
+
           <Button x:Name="AllButton" Style="{StaticResource CardButton}" Click="AllButton_Click">
-            <StackPanel>
-              <TextBlock Text="Controlla tutto" FontSize="16" FontWeight="SemiBold" />
-              <TextBlock Text="Fa tutti i controlli qui sotto, uno dopo l'altro." TextWrapping="Wrap" Opacity="0.8" />
-            </StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE9D9;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Controlla tutto" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Panoramica completa: gaming, RAM, driver e crash." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
           </Button>
+
           <Button x:Name="GamingButton" Style="{StaticResource CardButton}" Click="GamingButton_Click">
-            <StackPanel>
-              <TextBlock Text="Gaming" FontSize="16" FontWeight="SemiBold" />
-              <TextBlock Text="Modalità gioco, scheda video, monitor, piano energetico." TextWrapping="Wrap" Opacity="0.8" />
-            </StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE7FC;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Gaming" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Modalità gioco, scheda video, monitor, piano energetico." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
           </Button>
+
           <Button x:Name="HardwareButton" Style="{StaticResource CardButton}" Click="HardwareButton_Click">
-            <StackPanel>
-              <TextBlock Text="RAM e driver" FontSize="16" FontWeight="SemiBold" />
-              <TextBlock Text="La RAM va alla sua velocità? Ci sono driver vecchi o dispositivi con errori?" TextWrapping="Wrap" Opacity="0.8" />
-            </StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE7F4;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="RAM e driver" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Velocità RAM (XMP), driver e dispositivi con errori." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
           </Button>
+
           <Button x:Name="CrashButton" Style="{StaticResource CardButton}" Click="CrashButton_Click">
-            <StackPanel>
-              <TextBlock Text="Problemi e crash" FontSize="16" FontWeight="SemiBold" />
-              <TextBlock Text="Schermate blu e app che si chiudono, con un rapporto da dare a un'IA." TextWrapping="Wrap" Opacity="0.8" />
-            </StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE7BA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Problemi e crash" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Schermate blu e app bloccate, con rapporto per l'IA." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
           </Button>
-          <TextBlock Margin="2,8,2,0" TextWrapping="Wrap" Opacity="0.7"
-                     Text="Pulizia, ottimizzazione e le altre funzioni arriveranno dopo, sempre con anteprima, punto di ripristino e annulla." />
+
+          <TextBlock Text="PULIZIA E OTTIMIZZAZIONE" Style="{StaticResource NavSectionHeader}" />
+
+          <Button x:Name="CleanButton" Style="{StaticResource CardButton}" Click="CleanButton_Click">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE74D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Pulisci" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Temporanei, cache browser, Windows Update e Cestino." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
+          </Button>
+
+          <Button x:Name="OptimizeButton" Style="{StaticResource CardButton}" Click="OptimizeButton_Click">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE945;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Ottimizza" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Programmi all'avvio e piano energetico, reversibili." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
+          </Button>
+
+          <Button x:Name="DebloatButton" Style="{StaticResource CardButton}" Click="DebloatButton_Click">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE71D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Debloat" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Rimuovi in sicurezza le app preinstallate superflue." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
+          </Button>
+
+          <Button x:Name="DuplicatesButton" Style="{StaticResource CardButton}" Click="DuplicatesButton_Click">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE8C8;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Duplicati" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Trova copie identiche e spostale in quarantena." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              </StackPanel>
+            </Grid>
+          </Button>
+
+          <TextBlock Text="SICUREZZE" Style="{StaticResource NavSectionHeader}" />
+
+          <Button x:Name="HistoryButton" Style="{StaticResource CardButton}" Click="HistoryButton_Click">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="&#xE81C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="Storico e Quarantena" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock Text="Annulla modifiche passate e ripristina file messi da parte." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+                <TextBlock x:Name="HistoryExpiredHint" Visibility="Collapsed" Foreground="#D98200" FontSize="11"
+                           FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+            </Grid>
+          </Button>
         </StackPanel>
       </ScrollViewer>
 
-      <!-- I risultati -->
+      <!-- Area principale a destra -->
       <Grid Grid.Column="2">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="*" />
-          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock x:Name="ResultsHeading" Grid.Row="0" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"
-                   Text="Scegli un controllo a sinistra." TextWrapping="Wrap" />
-
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-          <StackPanel>
-            <ItemsControl x:Name="ResultsList">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Border Margin="0,0,0,8" Padding="12" CornerRadius="6" BorderThickness="1"
-                          Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                          BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
-                    <Grid>
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="32" />
-                        <ColumnDefinition Width="*" />
-                      </Grid.ColumnDefinitions>
-                      <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}" FontSize="18"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" VerticalAlignment="Top" Margin="0,2,0,0"
-                                 ToolTip="{Binding StatusText}" />
-                      <StackPanel Grid.Column="1">
-                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Margin="0,2,0,0" />
-                        <TextBox Text="{Binding Detail, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,6,0,0"
-                                 FontFamily="Consolas" FontSize="12" BorderThickness="0" Background="Transparent"
-                                 Visibility="{Binding ShowDetail, Converter={StaticResource BoolToVisibility}}" />
-                      </StackPanel>
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
-            <TextBox x:Name="ReportText" Visibility="Collapsed" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
-                     FontFamily="Consolas" FontSize="12" MinHeight="200" MaxHeight="400" Margin="0,8,0,0"
-                     VerticalScrollBarVisibility="Auto" />
-          </StackPanel>
-        </ScrollViewer>
-
-        <StackPanel x:Name="ReportButtons" Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0" Visibility="Collapsed">
-          <Button Content="Copia il rapporto per l'IA" Padding="12,6" Margin="0,0,10,0" Click="CopyReport_Click" />
-          <Button Content="Salva il rapporto…" Padding="12,6" Click="SaveReport_Click" />
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+          <TextBlock x:Name="ResultsHeading" FontSize="18" FontWeight="SemiBold"
+                     Text="Scegli un controllo o un'azione a sinistra." TextWrapping="Wrap" />
+          <TextBlock x:Name="ResultsSubheading" Visibility="Collapsed" Opacity="0.75" Margin="0,2,0,0" TextWrapping="Wrap" />
         </StackPanel>
+
+        <!-- Vista 1: Controlli sola lettura -->
+        <Grid x:Name="ChecksPanel" Grid.Row="1">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <ItemsControl x:Name="ResultsList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Margin="0,0,0,8" Padding="12" CornerRadius="6" BorderThickness="1"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="32" />
+                          <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}" FontSize="18"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" VerticalAlignment="Top" Margin="0,2,0,0"
+                                   ToolTip="{Binding StatusText}" />
+                        <StackPanel Grid.Column="1">
+                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                          <TextBox Text="{Binding Detail, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,6,0,0"
+                                   FontFamily="Consolas" FontSize="12" BorderThickness="0" Background="Transparent"
+                                   Visibility="{Binding ShowDetail, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <TextBox x:Name="ReportText" Visibility="Collapsed" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True"
+                       FontFamily="Consolas" FontSize="12" MinHeight="200" MaxHeight="400" Margin="0,8,0,0"
+                       VerticalScrollBarVisibility="Auto" />
+            </StackPanel>
+          </ScrollViewer>
+
+          <StackPanel x:Name="ReportButtons" Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,0" Visibility="Collapsed">
+            <Button Content="Copia il rapporto per l'IA" Padding="12,6" Margin="0,0,10,0" Click="CopyReport_Click" />
+            <Button Content="Salva il rapporto…" Padding="12,6" Click="SaveReport_Click" />
+          </StackPanel>
+        </Grid>
+
+        <!-- Vista 2: Azioni (Pulisci, Ottimizza, Debloat, Duplicati) -->
+        <Grid x:Name="ActionsPanel" Grid.Row="1" Visibility="Collapsed">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <!-- Barra superiore azione -->
+          <StackPanel Grid.Row="0">
+            <Grid x:Name="DuplicatesFolderBar" Visibility="Collapsed" Margin="0,0,0,10">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Button x:Name="SelectFolderButton" Grid.Column="0" Padding="12,7" Margin="0,0,10,0"
+                      Click="SelectFolderButton_Click">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="&#xE838;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" />
+                  <TextBlock Text="Scegli cartella…" VerticalAlignment="Center" />
+                </StackPanel>
+              </Button>
+              <Border Grid.Column="1" Padding="10,6" CornerRadius="6" BorderThickness="1"
+                      Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                      BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                <TextBlock x:Name="SelectedFoldersText" VerticalAlignment="Center" TextWrapping="Wrap"
+                           Opacity="0.85" Text="Nessuna cartella selezionata" />
+              </Border>
+            </Grid>
+
+            <WrapPanel Margin="0,0,0,10">
+              <Button x:Name="ScanActionButton" Content="Analizza" Padding="14,7" FontWeight="SemiBold"
+                      Margin="0,0,8,0" Click="ScanActionButton_Click" />
+              <Button x:Name="CancelScanButton" Content="Annulla ricerca" Padding="12,7" Margin="0,0,8,0"
+                      Visibility="Collapsed" Click="CancelScanButton_Click" />
+              <Button x:Name="SelectAllButton" Content="Seleziona tutto" Padding="10,7" Margin="0,0,8,0"
+                      Visibility="Collapsed" Click="SelectAllButton_Click" />
+              <Button x:Name="DeselectAllButton" Content="Deseleziona tutto" Padding="10,7"
+                      Visibility="Collapsed" Click="DeselectAllButton_Click" />
+            </WrapPanel>
+
+            <ProgressBar x:Name="ActionProgressBar" IsIndeterminate="True" Height="4" Margin="0,0,0,10" Visibility="Collapsed" />
+          </StackPanel>
+
+          <!-- Riepilogo ed esiti -->
+          <StackPanel Grid.Row="1">
+            <Border x:Name="ActionSummaryBanner" Visibility="Collapsed" Margin="0,0,0,10" Padding="12" CornerRadius="6"
+                    BorderThickness="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+              <TextBlock x:Name="ActionSummaryText" TextWrapping="Wrap" />
+            </Border>
+
+            <Border x:Name="OutcomesBanner" Visibility="Collapsed" Margin="0,0,0,10" Padding="12" CornerRadius="6"
+                    BorderThickness="4,1,1,1" BorderBrush="#2E9E44"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+              <StackPanel>
+                <TextBlock x:Name="OutcomesHeadingText" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock x:Name="RestorePointOutcomeText" Visibility="Collapsed" Margin="0,4,0,0" Opacity="0.85" TextWrapping="Wrap" />
+                <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0">
+                  <ItemsControl x:Name="OutcomesList">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,6">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Top" Margin="0,2,0,0" />
+                          <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Opacity="0.85" FontSize="12" />
+                          </StackPanel>
+                          <TextBlock Grid.Column="2" Text="{Binding BytesText}" Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold"
+                                     Visibility="{Binding HasBytes, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- Lista voci PlannedChange -->
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock x:Name="ActionsEmptyText" Visibility="Collapsed" Opacity="0.75" TextWrapping="Wrap" Margin="2,4,2,0" />
+
+              <ItemsControl x:Name="PlannedChangesList">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Margin="0,0,0,8" Padding="12" CornerRadius="6" BorderThickness="1"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox Grid.Column="0" Margin="0,2,10,0" VerticalAlignment="Top"
+                                  IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Click="PlannedChangeCheck_Click" />
+
+                        <StackPanel Grid.Column="1">
+                          <DockPanel LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                              <Border Visibility="{Binding HasCurrentStateBadge, Converter={StaticResource BoolToVisibility}}"
+                                      Margin="6,0,0,0" Padding="6,2" CornerRadius="4" BorderThickness="1"
+                                      BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                <TextBlock Text="{Binding CurrentStateBadge}" FontSize="11" Opacity="0.85" />
+                              </Border>
+                              <Border Visibility="{Binding RequiresAdmin, Converter={StaticResource BoolToVisibility}}"
+                                      Margin="6,0,0,0" Padding="6,2" CornerRadius="4" BorderThickness="1" BorderBrush="#D98200">
+                                <TextBlock Text="Amministratore" FontSize="11" Foreground="#D98200" />
+                              </Border>
+                              <Border Visibility="{Binding HasSize, Converter={StaticResource BoolToVisibility}}"
+                                      Margin="6,0,0,0" Padding="6,2" CornerRadius="4" BorderThickness="1"
+                                      BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                <TextBlock Text="{Binding SizeText}" FontSize="11" FontWeight="SemiBold" />
+                              </Border>
+                            </StackPanel>
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                          </DockPanel>
+
+                          <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" Margin="0,3,0,0" Opacity="0.9" />
+
+                          <StackPanel Visibility="{Binding ShowExpertDetails, Converter={StaticResource BoolToVisibility}}" Margin="0,6,0,0">
+                            <TextBlock Text="{Binding BeforeAfterText}" TextWrapping="Wrap" FontSize="12" Opacity="0.8"
+                                       Visibility="{Binding HasBeforeAfter, Converter={StaticResource BoolToVisibility}}" />
+                            <TextBox Text="{Binding TechnicalDetail, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                     Margin="0,4,0,0" FontFamily="Consolas" FontSize="12" BorderThickness="0" Background="Transparent"
+                                     Visibility="{Binding ShowExpertTechnicalDetail, Converter={StaticResource BoolToVisibility}}" />
+                          </StackPanel>
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+
+          <!-- Barra inferiore azione -->
+          <DockPanel x:Name="ActionsBottomBar" Grid.Row="3" Margin="0,12,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="SelectedSummaryText" DockPanel.Dock="Left" VerticalAlignment="Center" Opacity="0.85" />
+            <Button x:Name="PreviewApplyButton" DockPanel.Dock="Right" HorizontalAlignment="Right"
+                    Content="Anteprima e applica" Padding="16,8" FontWeight="SemiBold"
+                    Click="PreviewApplyButton_Click" />
+          </DockPanel>
+        </Grid>
+
+        <!-- Vista 3: Storico e Quarantena -->
+        <TabControl x:Name="HistoryTabControl" Grid.Row="1" Visibility="Collapsed"
+                    SelectionChanged="HistoryTabs_SelectionChanged">
+          <TabItem x:Name="HistoryTab" Header="Storico modifiche">
+            <Grid Margin="0,10,0,0">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+
+              <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="RefreshHistoryButton" Grid.Column="0" Content="Aggiorna" Padding="12,6" Margin="0,0,12,0"
+                        Click="RefreshHistory_Click" />
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.75" TextWrapping="Wrap"
+                           Text="Le modifiche reversibili (avvio, piano energetico, app, duplicati) si possono annullare singolarmente o per sessione." />
+              </Grid>
+
+              <Border x:Name="UndoFeedbackBanner" Grid.Row="1" Visibility="Collapsed" Margin="0,0,0,10" Padding="12" CornerRadius="6"
+                      BorderThickness="4,1,1,1" BorderBrush="#0078D4"
+                      Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,6">
+                    <Button DockPanel.Dock="Right" Content="Chiudi" Padding="8,2" FontSize="11" Click="DismissUndoFeedback_Click" />
+                    <TextBlock Text="Esito annullamento" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </DockPanel>
+                  <ItemsControl x:Name="UndoOutcomesList">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,6">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="*" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="{Binding Glyph}" Foreground="{Binding Color}"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Top" Margin="0,2,0,0" />
+                          <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="12" Opacity="0.85" />
+                            <TextBlock Visibility="{Binding HasStoreUrl, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,0">
+                              <Hyperlink Tag="{Binding StoreUrl}" Click="OpenStoreUrl_Click">
+                                <Run Text="Apri ricerca in Microsoft Store" />
+                              </Hyperlink>
+                            </TextBlock>
+                          </StackPanel>
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                  <TextBlock x:Name="HistoryEmptyText" Visibility="Collapsed" Opacity="0.75" TextWrapping="Wrap"
+                             Text="Nessuna modifica registrata finora." />
+
+                  <ItemsControl x:Name="HistorySessionsList">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Margin="0,0,0,12" Padding="12" CornerRadius="6" BorderThickness="1"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                          <StackPanel>
+                            <DockPanel Margin="0,0,0,8">
+                              <Button DockPanel.Dock="Right" Content="Annulla sessione" Padding="10,5"
+                                      Tag="{Binding SessionId}" Click="UndoSession_Click"
+                                      IsEnabled="{Binding HasUndoableEntries}" />
+                              <WrapPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TimestampText}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <TextBlock Text="{Binding SummaryText}" Opacity="0.75" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <Border Visibility="{Binding RestorePointCreated, Converter={StaticResource BoolToVisibility}}"
+                                        Padding="6,2" CornerRadius="4" BorderThickness="1" BorderBrush="#2E9E44">
+                                  <TextBlock Text="Punto di ripristino creato" FontSize="11" Foreground="#2E9E44" />
+                                </Border>
+                              </WrapPanel>
+                            </DockPanel>
+
+                            <ItemsControl ItemsSource="{Binding Entries}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                  <Border Margin="0,4,0,0" Padding="10,8" CornerRadius="4" BorderThickness="1"
+                                          BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                    <Grid>
+                                      <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                      </Grid.ColumnDefinitions>
+
+                                      <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                        <WrapPanel>
+                                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                          <TextBlock Text="{Binding ActionKindLabel}" FontSize="12" Opacity="0.7" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                          <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding StatusColor}" VerticalAlignment="Center" />
+                                        </WrapPanel>
+
+                                        <StackPanel Visibility="{Binding ShowExpertDetails, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,0">
+                                          <TextBlock Text="{Binding BeforeAfterText}" TextWrapping="Wrap" FontSize="11" Opacity="0.8" />
+                                          <TextBox Text="{Binding Target, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                                   Margin="0,2,0,0" FontFamily="Consolas" FontSize="11" BorderThickness="0" Background="Transparent" />
+                                        </StackPanel>
+                                      </StackPanel>
+
+                                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Button Content="Annulla" Padding="10,4"
+                                                Tag="{Binding Id}" Click="UndoEntry_Click"
+                                                Visibility="{Binding CanUndo, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="Non annullabile" FontSize="11" Opacity="0.6"
+                                                   Visibility="{Binding ShowNonReversibleNote, Converter={StaticResource BoolToVisibility}}" />
+                                      </StackPanel>
+                                    </Grid>
+                                  </Border>
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </ScrollViewer>
+            </Grid>
+          </TabItem>
+
+          <TabItem x:Name="QuarantineTab" Header="Quarantena">
+            <Grid Margin="0,10,0,0">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+
+              <Grid Grid.Row="0" Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="RefreshQuarantineButton" Grid.Column="0" Content="Aggiorna" Padding="12,6" Margin="0,0,12,0"
+                        Click="RefreshQuarantine_Click" />
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" Opacity="0.75" TextWrapping="Wrap"
+                           Text="I file spostati restano al sicuro in quarantena finché non li ripristini o non decidi di svuotare quelli oltre 30 giorni." />
+              </Grid>
+
+              <Border x:Name="ExpiredQuarantineBanner" Grid.Row="1" Visibility="Collapsed" Margin="0,0,0,10" Padding="12" CornerRadius="6"
+                      BorderThickness="4,1,1,1" BorderBrush="#D98200"
+                      Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Grid.Column="0" Text="&#xE7BA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16"
+                             Foreground="#D98200" Margin="0,2,8,0" VerticalAlignment="Top" />
+                  <TextBlock Grid.Column="1" x:Name="ExpiredQuarantineText" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+                  <Button Grid.Column="2" x:Name="PurgeExpiredButton" Content="Svuota elementi oltre 30 giorni"
+                          Padding="12,6" Click="PurgeExpired_Click" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+
+              <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                  <TextBlock x:Name="QuarantineEmptyText" Visibility="Collapsed" Opacity="0.75" TextWrapping="Wrap"
+                             Text="La quarantena è vuota." />
+
+                  <ItemsControl x:Name="QuarantineItemsList">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Margin="0,0,0,8" Padding="12" CornerRadius="6" BorderThickness="1"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*" />
+                              <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                              <WrapPanel>
+                                <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                <Border Padding="6,2" CornerRadius="4" BorderThickness="1" Margin="0,0,6,0"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                                  <TextBlock Text="{Binding SizeText}" FontSize="11" />
+                                </Border>
+                                <TextBlock Text="{Binding AgeText}" FontSize="12" Opacity="0.75" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <Border Visibility="{Binding IsExpired, Converter={StaticResource BoolToVisibility}}"
+                                        Padding="6,2" CornerRadius="4" BorderThickness="1" BorderBrush="#D98200">
+                                  <TextBlock Text="Oltre 30 giorni" FontSize="11" Foreground="#D98200" />
+                                </Border>
+                              </WrapPanel>
+
+                              <TextBlock Text="{Binding OriginalPath}" TextWrapping="Wrap" FontSize="12" Opacity="0.8" Margin="0,4,0,0" />
+
+                              <StackPanel Visibility="{Binding ShowExpertDetails, Converter={StaticResource BoolToVisibility}}" Margin="0,6,0,0">
+                                <TextBox Text="{Binding QuarantinedPath, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                         FontFamily="Consolas" FontSize="11" BorderThickness="0" Background="Transparent" />
+                                <TextBlock Text="{Binding Sha256}" FontFamily="Consolas" FontSize="11" Opacity="0.65" TextWrapping="Wrap" />
+                              </StackPanel>
+                            </StackPanel>
+
+                            <Button Grid.Column="1" Content="Ripristina" Padding="12,6" VerticalAlignment="Center"
+                                    Tag="{Binding Id}" Click="RestoreQuarantineItem_Click" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </ScrollViewer>
+            </Grid>
+          </TabItem>
+        </TabControl>
       </Grid>
     </Grid>
 

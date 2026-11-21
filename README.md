@@ -20,9 +20,10 @@ SHA256-verified releases.**
   <img src="docs/social-preview.png" width="800" alt="W11-cleaner-tool — checks your PC, changes nothing until you say so" />
 </p>
 
-> **Status: version 0.1, read-only.** This version checks the PC and **changes nothing**.
-> Cleaning, optimization and the other features will come later, always with a preview, a
-> restore point and undo.
+> **Status: version 0.2.0 (pre-release).** Includes read-only diagnostics plus safe cleaning,
+> optimization, conservative debloat, duplicate quarantine, change history with undo, and a
+> temporary no-sleep toggle. Every system change goes through a **preview dialog**, an optional
+> **restore point**, and a **JSON history log**. Real-PC verification in progress.
 
 > **Note:** the app's interface is in Italian for now. The labels quoted below are the ones you
 > will see on screen, with an English translation in brackets.
@@ -48,18 +49,25 @@ Two modes, one switch at the top: **«Modalità Esperto»** (Expert mode). The c
   on what it means and what to do.
 - **Expert mode** — the same checks with the technical details: registry keys, values, versions.
 
-| Card | What it checks |
+| Card | What it does |
 |---|---|
+| **Controlla tutto** (Check everything) | Runs all read-only diagnostics below in one pass |
 | **Gaming** | Game Mode, hardware-accelerated GPU scheduling, power plan, monitor refresh rate vs. the maximum, memory integrity (reported only), Game Bar background recording, graphics driver, free space on the system drive, pending reboot |
-| **RAM e driver** (RAM and drivers) | RAM speed vs. the rated speed (XMP / EXPO / DOCP, indicative), devices with errors, graphics, network and audio drivers with their date |
+| **RAM e driver** (RAM and drivers) | RAM speed vs. the rated speed (XMP / EXPO / DOCP, indicative), devices with errors, graphics, network and audio drivers with their date (Microsoft `2006` built-in drivers are recognized as normal Windows drivers) |
 | **Problemi e crash** (Problems and crashes) | Blue screens, unexpected shutdowns, hardware errors (WHEA), apps that crash or hang, minidumps of the last 30 days, plus a **report to copy or save for an AI**, without user name, PC name or personal paths |
+| **Pulisci** (Clean) | Estimates and cleans user `%TEMP%`, `Windows\Temp`, Windows Update download cache, Edge/Chrome/Firefox caches (cache only — passwords, cookies and history stay intact), and the Recycle Bin |
+| **Ottimizza** (Optimize) | Lists startup programs (`StartupApproved`) and Windows power plans (`powercfg`) with reversible toggling and switching |
+| **Debloat** | Conservatively detects safe preinstalled UWP bloatware for removal while strictly protecting Microsoft Store, Xbox/GamingServices, Windows Security, Edge, Calculator, Photos, Notepad, Terminal and system runtimes |
+| **Duplicati** (Duplicates) | Scans chosen folders (size → 4 KB SHA256 → full SHA256), keeps the oldest copy and moves exact duplicates to **Quarantine** (never deletes directly) |
+| **Storico e Quarantena** (History & Quarantine) | Undo individual changes or full sessions, reopen Microsoft Store links when an Appx needs reinstalling, restore quarantined files, or purge quarantined items older than 30 days |
+
+A **«Niente sospensione (download)»** (No sleep for downloads) toggle in the top bar prevents Windows from sleeping while the app window stays open, without touching permanent Windows power settings.
 
 ## ✅ Requirements
 
 - **Windows 11** Home or Pro, **x64** (Intel / AMD) or **ARM64** (Snapdragon).
 - Nothing to install: the exe is self-contained and already includes .NET.
-- No administrator rights needed. In Expert mode, **«Riavvia come amministratore»** (Restart as
-  administrator) also reads the minidumps.
+- No administrator rights required to start. **«Riavvia come amministratore»** (Restart as administrator) in the top bar enables reading crash minidumps, creating Windows restore points, cleaning `Windows\Temp` / Windows Update cache, and toggling machine-wide (`HKLM`) startup entries.
 
 ## 📦 Download and verify
 
@@ -82,33 +90,34 @@ Two modes, one switch at the top: **«Modalità Esperto»** (Expert mode). The c
 
 ## 📖 Usage
 
-1. Open the exe. On the left there are the cards; on the right, the results.
-2. Click **«Controlla tutto»** (Check everything) or a single card: **Gaming**, **RAM e driver**,
-   **Problemi e crash**.
-3. Read the results: ✅ all good, ⚠️ worth a look, ❌ needs fixing. Each one says what to do.
-4. In **Problemi e crash**, **«Copia il rapporto per l'IA»** (Copy the report for the AI) or
-   **«Salva il rapporto…»** (Save the report) gives you an anonymized text to paste into an AI
-   assistant.
+1. Open the exe. On the left are the navigation cards; on the right, diagnostics, action lists or history.
+2. For diagnostics, click **«Controlla tutto»** (Check everything) or a single card (**Gaming**, **RAM e driver**, **Problemi e crash**). In **Problemi e crash**, **«Copia il rapporto per l'IA»** or **«Salva il rapporto…»** gives you an anonymized summary for an AI assistant.
+3. For **Pulisci**, **Ottimizza**, **Debloat**, or **Duplicati**, click the analyze button first, review and check/uncheck items, then click **«Anteprima e applica»** (or **«Sposta in quarantena»** for duplicates).
+4. Review the **preview modal** (before → after, estimated space, restore point checkbox) and confirm.
+5. Open **«Storico e Quarantena»** at any time to undo reversible changes or restore quarantined files.
 
-Settings live in `%LOCALAPPDATA%\W11-cleaner-tool\settings.json`.
+App data lives in `%LOCALAPPDATA%\W11-cleaner-tool\`:
+- `settings.json` — Expert mode preference
+- `history.json` — applied sessions and undo metadata
+- `quarantine\` — moved duplicate files with `manifest.json` and SHA256 hashes
 
 ## 🔐 Privacy and safety
 
-- **Read-only** in version 0.1: registry, WMI, event logs and Windows APIs are only read.
-- The crash report removes the user name, the PC name, the domain and the profile paths.
-- No telemetry, no network calls, no installation of apps.
-- Every future feature that changes the system will have a **preview** (before → after), a
-  **restore point**, a **change log** and **undo** — and is called "working" only after a test on
-  a real PC.
+- **Preview before changes:** nothing is modified during scans; every change shows *before → after* and requires explicit confirmation.
+- **Restore points:** enabled by default in the preview modal for system changes when running as administrator; never forces System Protection on if disabled.
+- **Undo & Quarantine:** startup entries, power plans, removed apps (re-registered locally or via Microsoft Store link), and duplicate files (moved to quarantine, with manual purge suggested only after 30 days) can be reverted from **«Storico e Quarantena»**.
+- **Anonymized crash report:** strips user name, PC name, domain and profile paths.
+- **No telemetry, no network calls, no installation of apps (`winget`).**
 
 ## 🗺️ Roadmap
 
-1. ✅ Read-only checks: gaming checklist, RAM and drivers, crash report for an AI.
-2. No sleep while downloads are running (only while the app is open).
-3. Cleaning: temporary files, caches, recycle bin — an estimate first.
-4. Optimization: startup programs, power plan.
-5. Debloat.
-6. Duplicate files moved to quarantine, never deleted straight away.
+1. ✅ Read-only checks: gaming checklist, RAM and drivers (with Microsoft `2006` driver handling), crash report for an AI.
+2. ✅ No sleep while downloads are running (only while the app is open).
+3. ✅ Cleaning: temporary files, browser caches, Windows Update cache, recycle bin — an estimate first.
+4. ✅ Optimization: reversible startup programs and power plan switching.
+5. ✅ Debloat: conservative UWP bloatware removal with protected system packages and undo.
+6. ✅ Duplicate files moved to quarantine (never deleted straight away), with restore and 30-day purge prompt.
+7. Real-PC verification across Windows 11 Home/Pro and future newsletter cleanup module (separate).
 
 ## 💻 Development
 
@@ -129,11 +138,12 @@ dotnet test tests/W11CleanerTool.Tests/W11CleanerTool.Tests.csproj
 ### Project structure
 
 ```
-src/W11CleanerTool/         WPF interface (.NET 10, Fluent theme, light/dark from Windows)
-src/W11CleanerTool.Core/    the checks, no UI: gaming, hardware, crash report, anonymizer
-tests/                      rule and anonymizer tests, smoke tests on the Windows runner
+src/W11CleanerTool/         WPF interface (.NET 10, Fluent theme, Base/Expert modes, PreviewDialog)
+src/W11CleanerTool.Core/    Core engine (checks, KeepAwakeService, Safety/, Actions/, anonymizer)
+tests/                      Unit tests (heuristics, anonymizer, safety, actions) and runner smoke tests
 scripts/                    publish.ps1 (x64 + ARM64, SHA256) and VERIFY.ps1
 docs/                       landing page, social preview, decisions, plan, research (Italian)
+CHANGELOG.md                Release history
 ```
 
 The project notes in `docs/` (decisions, plan, research on similar tools) are written in Italian.

@@ -59,6 +59,30 @@ internal static class NativeMethods
         public string DeviceKey;
     }
 
+    [Flags]
+    internal enum ExecutionState : uint
+    {
+        ES_SYSTEM_REQUIRED = 0x00000001,
+        ES_DISPLAY_REQUIRED = 0x00000002,
+        ES_CONTINUOUS = 0x80000000,
+    }
+
+    [Flags]
+    internal enum RecycleFlags : uint
+    {
+        SHERB_NOCONFIRMATION = 0x00000001,
+        SHERB_NOPROGRESSUI = 0x00000002,
+        SHERB_NOSOUND = 0x00000004,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SHQUERYRBINFO
+    {
+        public int cbSize;
+        public long i64Size;
+        public long i64NumItems;
+    }
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
@@ -72,4 +96,13 @@ internal static class NativeMethods
 
     [DllImport("kernel32.dll")]
     internal static extern IntPtr LocalFree(IntPtr hMem);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    internal static extern int SHQueryRecycleBin(string? pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    internal static extern int SHEmptyRecycleBin(IntPtr hwnd, string? pszRootPath, RecycleFlags dwFlags);
 }
