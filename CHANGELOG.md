@@ -7,6 +7,8 @@ here before the tag is pushed.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-21
+
 ### Added
 - English README, bilingual landing page (EN/IT) in `docs/` and social preview with its source
   (`docs/social-preview.html`).
@@ -48,5 +50,6 @@ First version, **read-only**: it checks the PC and changes nothing.
 - Some built-in Windows drivers are reported as old (dated 2006): it is the date Windows gives
   them, not a real problem.
 
-[Unreleased]: https://github.com/giosci1994/W11-cleaner-tool/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/giosci1994/W11-cleaner-tool/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/giosci1994/W11-cleaner-tool/releases/tag/v0.2.0
 [0.1.0]: https://github.com/giosci1994/W11-cleaner-tool/releases/tag/v0.1.0
