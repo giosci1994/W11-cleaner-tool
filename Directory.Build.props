@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>0.2.0</VersionPrefix>
+    <VersionPrefix>0.2.1</VersionPrefix>
     <Authors>giosci1994</Authors>
     <Product>W11-cleaner-tool</Product>
     <Copyright>Copyright (c) 2026 giosci1994</Copyright>

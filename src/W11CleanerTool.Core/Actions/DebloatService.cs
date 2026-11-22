@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -181,13 +180,16 @@ public sealed class DebloatService
                 Id = $"debloat:{pkg.PackageFullName}",
                 Category = CategoryName,
                 Title = known.FriendlyName,
-                Explanation = $"{known.Description} Rimozione solo per l'utente corrente.",
+                Explanation = $"{known.Description} Rimozione solo per l'utente corrente. " +
+                              "Annullabile solo in parte: dallo Storico provo a reinstallarla dal pacchetto rimasto sul PC; " +
+                              "se non c'è più, ti apro Microsoft Store per reinstallarla.",
                 TechnicalDetail = $"{pkg.PackageFullName} ({pkg.PackageFamilyName})",
                 BeforeValue = "Installata",
-                AfterValue = "Rimossa per questo utente",
+                AfterValue = "Rimossa per questo utente (si reinstalla dal pacchetto locale o da Microsoft Store)",
                 EstimatedBytes = 0,
                 RequiresAdmin = false,
-                IsReversible = true,
+                // Onesto: l'annullamento non è garantito (dipende dal pacchetto rimasto sul disco o da Microsoft Store).
+                IsReversible = false,
                 IsSelected = false,
                 TargetKey = pkg.PackageFullName,
                 ActionKind = ActionKind.DebloatRemoveApp,
@@ -218,15 +220,18 @@ public sealed class DebloatService
             return new ActionExecutionResult(null, null, outcomes);
         }
 
+        // Se lo storico non si legge (file bloccato, permessi) non si comincia nemmeno.
+        _actionLog.EnsureAccessible();
+
         RestorePointResult? restorePoint = createRestorePoint
             ? _restorePointService.Create("W11-cleaner-tool: rimozione app")
             : null;
-
-        var session = new ActionSession
+        if (ActionExecutionResult.IsMissing(createRestorePoint, restorePoint))
         {
-            TimestampUtc = DateTime.UtcNow,
-            RestorePointCreated = restorePoint?.Status == RestorePointStatus.Created,
-        };
+            return ActionExecutionResult.MissingRestorePoint(restorePoint!);
+        }
+
+        var recorder = new SessionRecorder(_actionLog, restorePoint?.Status == RestorePointStatus.Created);
 
         foreach (var change in selected)
         {
@@ -284,7 +289,7 @@ public sealed class DebloatService
                 Succeeded: true,
                 $"«{change.Title}» rimossa."));
 
-            session.Entries.Add(new ActionLogEntry
+            recorder.Record(new ActionLogEntry
             {
                 ActionKind = ActionKind.DebloatRemoveApp,
                 Title = change.Title,
@@ -295,13 +300,7 @@ public sealed class DebloatService
             });
         }
 
-        if (session.Entries.Count > 0)
-        {
-            _actionLog.AddSession(session);
-            return new ActionExecutionResult(session, restorePoint, outcomes);
-        }
-
-        return new ActionExecutionResult(null, restorePoint, outcomes);
+        return new ActionExecutionResult(recorder.Complete(), restorePoint, outcomes);
     }
 
     /// <summary>Prova a ri-registrare l'app rimossa o fornisce il link a Microsoft Store.</summary>
@@ -436,35 +435,15 @@ public sealed class DebloatService
     private static string EscapePowerShellSingleQuotes(string value)
         => value.Replace("'", "''", StringComparison.Ordinal);
 
+    // Gli script impostano [Console]::OutputEncoding a UTF-8, quindi l'uscita si legge in UTF-8.
+    // Remove-AppxPackage e Add-AppxPackage possono metterci parecchio: 2 minuti, poi si chiude l'albero dei processi.
     private static (int ExitCode, string Output, string Error) RunPowerShellScript(string script)
     {
-        try
-        {
-            string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo(
-                    "powershell.exe",
-                    $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}")
-                {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8,
-                },
-            };
-
-            process.Start();
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit(30_000);
-            return (process.ExitCode, stdout, stderr);
-        }
-        catch (Exception ex)
-        {
-            return (-1, "", ex.Message);
-        }
+        string encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+        return ProcessRunner.Run(
+            "powershell.exe",
+            $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {encoded}",
+            Encoding.UTF8,
+            TimeSpan.FromMinutes(2));
     }
 }

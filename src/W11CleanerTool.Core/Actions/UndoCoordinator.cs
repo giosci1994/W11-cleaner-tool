@@ -50,6 +50,15 @@ public sealed class UndoCoordinator
             return new UndoOutcome(entry.Id, entry.Title, Succeeded: true, "Modifica già annullata.");
         }
 
+        if (entry.QuarantinePurged)
+        {
+            return new UndoOutcome(
+                entry.Id,
+                entry.Title,
+                Succeeded: false,
+                "Il file è stato eliminato definitivamente dalla quarantena: non si può più ripristinare.");
+        }
+
         UndoOutcome outcome = entry.ActionKind switch
         {
             ActionKind.StartupDisable or ActionKind.StartupEnable or ActionKind.PowerPlanChange =>

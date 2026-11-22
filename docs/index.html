@@ -91,10 +91,11 @@
 
         <div class="status-note">
           <span aria-hidden="true">🔒</span>
-          <span data-en="<b>Version 0.2.0 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat, duplicate quarantine and no-sleep — always with preview, restore point, history and undo."
-            data-it="<b>Versione 0.2.0 (pre-release).</b> Controlli in sola lettura più pulizia, ottimizzazione, debloat, quarantena duplicati e niente sospensione — sempre con anteprima, punto di ripristino, storico e annulla.">
-            <b>Version 0.2.0 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat,
-            duplicate quarantine and no-sleep — always with preview, restore point, history and undo.
+          <span data-en="<b>Version 0.2.1 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat, duplicate quarantine and no-sleep — always with preview, history and a restore point (as administrator). Optimization and quarantine can be undone, debloat in part; cleaning and the Recycle Bin cannot."
+            data-it="<b>Versione 0.2.1 (pre-release).</b> Controlli in sola lettura più pulizia, ottimizzazione, debloat, quarantena duplicati e niente sospensione — sempre con anteprima, storico e punto di ripristino (da amministratore). Ottimizzazione e quarantena si annullano, il debloat in parte; pulizia e Cestino no.">
+            <b>Version 0.2.1 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat,
+            duplicate quarantine and no-sleep — always with preview, history and a restore point (as administrator).
+            Optimization and quarantine can be undone, debloat in part; cleaning and the Recycle Bin cannot.
           </span>
         </div>
 
@@ -222,8 +223,8 @@
         <article class="card reveal">
           <span class="card-icon">🔒</span>
           <h3 data-en="Preview, undo &amp; no personal data" data-it="Anteprima, annulla e nessun dato personale">Preview, undo &amp; no personal data</h3>
-          <p data-en="Every change starts with a before → after preview, an optional restore point, JSON history with per-session undo, and 30-day quarantine. Crash reports drop user/PC names; no telemetry or network calls."
-            data-it="Ogni modifica parte con anteprima prima → dopo, punto di ripristino facoltativo, storico JSON con annulla per voce o sessione e quarantena a 30 giorni. I rapporti tolgono nome utente e PC; nessuna telemetria o chiamata di rete.">Every change starts with a before → after preview, an optional restore point, JSON history with per-session undo, and 30-day quarantine. Crash reports drop user/PC names; no telemetry or network calls.</p>
+          <p data-en="Every change starts with a before → after preview, an optional restore point (needs administrator rights), JSON history with per-session undo, and 30-day quarantine. Deleted temporary files and the emptied Recycle Bin cannot be restored. Crash reports drop user/PC names; no telemetry or network calls."
+            data-it="Ogni modifica parte con anteprima prima → dopo, punto di ripristino facoltativo (servono i diritti di amministratore), storico JSON con annulla per voce o sessione e quarantena a 30 giorni. I file temporanei eliminati e il Cestino svuotato non si recuperano. I rapporti tolgono nome utente e PC; nessuna telemetria o chiamata di rete.">Every change starts with a before → after preview, an optional restore point (needs administrator rights), JSON history with per-session undo, and 30-day quarantine. Deleted temporary files and the emptied Recycle Bin cannot be restored. Crash reports drop user/PC names; no telemetry or network calls.</p>
         </article>
 
         <article class="card reveal">
@@ -305,8 +306,8 @@ Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256"
 Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256">powershell -ExecutionPolicy Bypass -File .\VERIFY.ps1
 # or by hand, then compare with SHA256SUMS.txt:
 Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
-        <p class="hint" data-en="Requires Windows 11 Home or Pro, 64-bit. No administrator rights needed; Expert mode can restart the app as administrator to read the minidumps."
-          data-it="Serve Windows 11 Home o Pro, a 64 bit. Non servono i diritti di amministratore; la modalità Esperto può riavviare l'app come amministratore per leggere i minidump.">Requires Windows 11 Home or Pro, 64-bit. No administrator rights needed; Expert mode can restart the app as administrator to read the minidumps.</p>
+        <p class="hint" data-en="Requires Windows 11 Home or Pro, 64-bit. No administrator rights needed to start; the «Restart as administrator» button (Base and Expert mode) unlocks minidumps, restore points and system folders."
+          data-it="Serve Windows 11 Home o Pro, a 64 bit. Per partire non servono i diritti di amministratore; il pulsante «Riavvia come amministratore» (in Base e in Esperto) serve per minidump, punti di ripristino e cartelle di sistema.">Requires Windows 11 Home or Pro, 64-bit. No administrator rights needed to start; the «Restart as administrator» button (Base and Expert mode) unlocks minidumps, restore points and system folders.</p>
       </div>
 
       <div class="cta-box reveal">
@@ -324,8 +325,8 @@ Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
       <div class="section-head reveal">
         <span class="section-label" data-en="// roadmap" data-it="// prossimi passi">// roadmap</span>
         <h2 data-en="One step at a time, each tested on a real PC" data-it="Un passo alla volta, ognuno provato su un PC vero">One step at a time, each tested on a real PC</h2>
-        <p data-en="Every feature that changes the system comes with a preview (before → after), a restore point, a change log and undo."
-          data-it="Ogni funzione che modifica il sistema arriva con anteprima (prima → dopo), punto di ripristino, registro delle modifiche e annulla.">Every feature that changes the system comes with a preview (before → after), a restore point, a change log and undo.</p>
+        <p data-en="Every feature that changes the system comes with a preview (before → after), a restore point (as administrator), a change log and undo where it is possible (not for cleaning and the Recycle Bin)."
+          data-it="Ogni funzione che modifica il sistema arriva con anteprima (prima → dopo), punto di ripristino (da amministratore), registro delle modifiche e annulla dove si può (non per pulizia e Cestino).">Every feature that changes the system comes with a preview (before → after), a restore point (as administrator), a change log and undo where it is possible (not for cleaning and the Recycle Bin).</p>
       </div>
 
       <ol class="roadmap reveal">
@@ -334,11 +335,11 @@ Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
         <li class="done"><span class="n">✓ 2</span><div><b data-en="No sleep during downloads" data-it="Niente sospensione durante i download">No sleep during downloads</b>
             <p data-en="Only while the app is open, without touching your settings." data-it="Solo mentre l'app è aperta, senza toccare le impostazioni.">Only while the app is open, without touching your settings.</p></div></li>
         <li class="done"><span class="n">✓ 3</span><div><b data-en="Cleaning" data-it="Pulizia">Cleaning</b>
-            <p data-en="Temporary files, caches, recycle bin. An estimate first." data-it="File temporanei, cache, cestino. Prima la stima.">Temporary files, caches, recycle bin. An estimate first.</p></div></li>
+            <p data-en="Temporary files, caches, recycle bin. An estimate first; deleted files do not come back." data-it="File temporanei, cache, cestino. Prima la stima; i file eliminati non tornano.">Temporary files, caches, recycle bin. An estimate first; deleted files do not come back.</p></div></li>
         <li class="done"><span class="n">✓ 4</span><div><b data-en="Optimization" data-it="Ottimizzazione">Optimization</b>
             <p data-en="Startup programs and power plan." data-it="Programmi all'avvio e piano energetico.">Startup programs and power plan.</p></div></li>
         <li class="done"><span class="n">✓ 5</span><div><b>Debloat</b>
-            <p data-en="Remove what you don't need, with undo." data-it="Togliere quello che non serve, con annulla.">Remove what you don't need, with undo.</p></div></li>
+            <p data-en="Remove what you don't need; undo reinstalls from the local package or Microsoft Store." data-it="Togliere quello che non serve; l'annulla reinstalla dal pacchetto locale o da Microsoft Store.">Remove what you don't need; undo reinstalls from the local package or Microsoft Store.</p></div></li>
         <li class="done"><span class="n">✓ 6</span><div><b data-en="Duplicates in quarantine" data-it="Duplicati in quarantena">Duplicates in quarantine</b>
             <p data-en="Moved aside, never deleted straight away." data-it="Spostati da parte, mai cancellati subito.">Moved aside, never deleted straight away.</p></div></li>
       </ol>

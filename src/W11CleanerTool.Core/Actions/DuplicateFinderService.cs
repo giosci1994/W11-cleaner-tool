@@ -53,10 +53,10 @@ public sealed class DuplicateFinderService
         long effectiveMinSize = Math.Max(1L, minFileSizeBytes);
         var filesBySize = new Dictionary<long, List<FileInfo>>();
 
-        foreach (string folder in folders
-                     .Where(f => !string.IsNullOrWhiteSpace(f))
-                     .Select(Path.GetFullPath)
-                     .Distinct(StringComparer.OrdinalIgnoreCase))
+        // Un solo elenco di file visti per tutte le cartelle: lo stesso file non deve mai risultare «copia di sé stesso».
+        var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (string folder in NormalizeScanRoots(folders))
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!Directory.Exists(folder) || IsExcludedRoot(folder))
@@ -64,7 +64,7 @@ public sealed class DuplicateFinderService
                 continue;
             }
 
-            CollectFiles(folder, effectiveMinSize, filesBySize, cancellationToken);
+            CollectFiles(folder, effectiveMinSize, filesBySize, seenFiles, cancellationToken);
         }
 
         var partialGroups = new Dictionary<(long Size, string PartialHash), List<FileInfo>>();
@@ -189,15 +189,18 @@ public sealed class DuplicateFinderService
             return new ActionExecutionResult(null, null, outcomes);
         }
 
+        // Se lo storico non si legge (file bloccato, permessi) non si comincia nemmeno.
+        _actionLog.EnsureAccessible();
+
         RestorePointResult? restorePoint = createRestorePoint
             ? _restorePointService.Create("W11-cleaner-tool: quarantena duplicati")
             : null;
-
-        var session = new ActionSession
+        if (ActionExecutionResult.IsMissing(createRestorePoint, restorePoint))
         {
-            TimestampUtc = DateTime.UtcNow,
-            RestorePointCreated = restorePoint?.Status == RestorePointStatus.Created,
-        };
+            return ActionExecutionResult.MissingRestorePoint(restorePoint!);
+        }
+
+        var recorder = new SessionRecorder(_actionLog, restorePoint?.Status == RestorePointStatus.Created);
 
         foreach (var change in selected)
         {
@@ -209,53 +212,125 @@ public sealed class DuplicateFinderService
                 continue;
             }
 
+            string? refusal = CheckKeeperBeforeMove(change, out string expectedHash);
+            if (refusal is not null)
+            {
+                outcomes.Add(new ActionItemOutcome(change.Id, change.Title, Succeeded: false, refusal));
+                continue;
+            }
+
+            QuarantineItem item;
             try
             {
-                var item = _quarantineService.MoveToQuarantine(change.TargetKey, session.SessionId);
-                outcomes.Add(new ActionItemOutcome(
-                    change.Id,
-                    change.Title,
-                    Succeeded: true,
-                    $"Spostato in quarantena ({Heuristics.FormatBytes(item.SizeBytes)}).",
-                    BytesFreed: item.SizeBytes));
-
-                session.Entries.Add(new ActionLogEntry
-                {
-                    ActionKind = ActionKind.QuarantineDuplicate,
-                    Title = change.Title,
-                    Target = item.OriginalPath,
-                    OldValue = item.OriginalPath,
-                    NewValue = "Quarantined",
-                    QuarantinePath = item.QuarantinedPath,
-                    TimestampUtc = DateTime.UtcNow,
-                });
+                // MoveToQuarantine ricontrolla lo SHA256 della copia e non la sposta se è cambiata.
+                item = _quarantineService.MoveToQuarantine(change.TargetKey, recorder.Session.SessionId, expectedHash);
             }
-            catch (Exception ex) when (ex is FileNotFoundException or IOException or UnauthorizedAccessException or SecurityException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
             {
                 outcomes.Add(new ActionItemOutcome(
                     change.Id,
                     change.Title,
                     Succeeded: false,
                     $"Impossibile spostare «{change.Title}»: {ex.Message}"));
+                continue;
+            }
+
+            string sizeText = Heuristics.FormatBytes(item.SizeBytes);
+            outcomes.Add(new ActionItemOutcome(
+                change.Id,
+                change.Title,
+                Succeeded: true,
+                item.FromOtherDrive
+                    ? $"Spostato in quarantena ({sizeText}). Veniva da un altro disco: ora occupa spazio sul disco della quarantena finché non la svuoti."
+                    : $"Spostato in quarantena ({sizeText}). Lo spazio si libera quando svuoti la quarantena.",
+                BytesFreed: item.SizeBytes));
+
+            recorder.Record(new ActionLogEntry
+            {
+                ActionKind = ActionKind.QuarantineDuplicate,
+                Title = change.Title,
+                Target = item.OriginalPath,
+                OldValue = item.OriginalPath,
+                NewValue = "Quarantined",
+                QuarantinePath = item.QuarantinedPath,
+                TimestampUtc = DateTime.UtcNow,
+            });
+        }
+
+        return new ActionExecutionResult(recorder.Complete(), restorePoint, outcomes);
+    }
+
+    /// <summary>
+    /// Prima di spostare una copia: l'originale tenuto deve esistere ed essere ancora identico all'analisi.
+    /// Restituisce il motivo del rifiuto, oppure null se si può procedere.
+    /// </summary>
+    private static string? CheckKeeperBeforeMove(PlannedChange change, out string expectedHash)
+    {
+        expectedHash = "";
+        if (!change.Metadata.TryGetValue("OriginalKeptPath", out string? keeper) || string.IsNullOrWhiteSpace(keeper) ||
+            !change.Metadata.TryGetValue("Sha256", out string? hash) || string.IsNullOrWhiteSpace(hash))
+        {
+            return "Mancano i dati dell'analisi (originale e SHA256): rifai la ricerca. La copia resta dov'è.";
+        }
+
+        expectedHash = hash.Trim();
+
+        if (string.Equals(
+                Path.GetFullPath(keeper),
+                Path.GetFullPath(change.TargetKey),
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return "L'originale e la copia sono lo stesso file: niente da spostare.";
+        }
+
+        if (!File.Exists(keeper))
+        {
+            return $"L'originale tenuto «{keeper}» non esiste più: per sicurezza la copia resta dov'è. Rifai la ricerca.";
+        }
+
+        string? keeperHash = TryComputeFullSha256(keeper);
+        if (keeperHash is null)
+        {
+            return $"Non riesco a leggere l'originale tenuto «{keeper}»: per sicurezza la copia resta dov'è.";
+        }
+
+        if (!string.Equals(keeperHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+        {
+            return "L'originale tenuto è cambiato dopo l'analisi (SHA256 diverso): per sicurezza la copia resta dov'è. Rifai la ricerca.";
+        }
+
+        return null;
+    }
+
+    /// <summary>Cartelle da scansionare senza doppioni: una cartella dentro un'altra già scelta si toglie.</summary>
+    internal static List<string> NormalizeScanRoots(IEnumerable<string> folders)
+    {
+        var normalized = folders
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Select(f => Path.TrimEndingDirectorySeparator(Path.GetFullPath(f)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(f => f.Length)
+            .ToList();
+
+        var roots = new List<string>();
+        foreach (string folder in normalized)
+        {
+            if (!roots.Any(r => IsSameOrInside(folder, r)))
+            {
+                roots.Add(folder);
             }
         }
 
-        if (session.Entries.Count > 0)
-        {
-            _actionLog.AddSession(session);
-            return new ActionExecutionResult(session, restorePoint, outcomes);
-        }
-
-        return new ActionExecutionResult(null, restorePoint, outcomes);
+        return roots;
     }
 
     private void CollectFiles(
         string rootFolder,
         long minFileSizeBytes,
         Dictionary<long, List<FileInfo>> filesBySize,
+        HashSet<string> seenFiles,
         CancellationToken ct)
     {
-        var seenFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var stack = new Stack<string>();
         stack.Push(rootFolder);
 
@@ -392,8 +467,11 @@ public sealed class DuplicateFinderService
             return true;
         }
 
-        return path.StartsWith(parent + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
-               path.StartsWith(parent + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+        // Una radice come «C:\» finisce già con il separatore.
+        string parentWithSep = parent.EndsWith(Path.DirectorySeparatorChar) || parent.EndsWith(Path.AltDirectorySeparatorChar)
+            ? parent
+            : parent + Path.DirectorySeparatorChar;
+        return path.StartsWith(parentWithSep, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string? TryComputePartialSha256(string path)

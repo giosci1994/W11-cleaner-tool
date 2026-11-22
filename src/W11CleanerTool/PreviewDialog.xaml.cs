@@ -75,7 +75,7 @@ public partial class PreviewDialog : Window
             RestorePointWarningBanner.Visibility = Visibility.Visible;
             RestorePointWarningText.Text =
                 "La Protezione sistema potrebbe essere spenta su questo PC. " +
-                "Il programma non la attiva da solo: se è spenta, il punto di ripristino verrà saltato senza bloccare le modifiche.";
+                "Il programma non la attiva da solo: se il punto di ripristino non si crea, prima di applicare ti chiedo se continuare senza.";
         }
         else if (!defaultCreateRestorePoint)
         {

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text.Json;
@@ -13,7 +15,13 @@ public sealed record CleanupTarget(
     ActionKind ActionKind,
     IReadOnlyList<string> Directories,
     bool RequiresAdmin = false,
-    bool IsRecycleBin = false);
+    bool IsRecycleBin = false,
+    TimeSpan MinFileAge = default);
+
+/// <summary>
+/// Cartella che una pulizia non deve mai svuotare. Con <see cref="ProtectInside"/> sono vietate anche le sue sottocartelle.
+/// </summary>
+internal sealed record ProtectedFolder(string Path, string Label, bool ProtectInside);
 
 /// <summary>
 /// Stima e pulizia di temporanei, cache Windows Update, cache browser comuni (solo Cache / Code Cache) e Cestino.
@@ -24,6 +32,9 @@ public sealed class CleanupService
     private const string CategoryName = "Pulizia";
     private const string DirectoriesJsonKey = "DirectoriesJson";
     private const string IsRecycleBinKey = "IsRecycleBin";
+    private const string MinFileAgeHoursKey = "MinFileAgeHours";
+    private const string BlockedReasonKey = "BlockedReason";
+    private static readonly TimeSpan TempMinFileAge = TimeSpan.FromHours(24);
     private const int RecycleBinEmptyHResult = unchecked((int)0x8000FFFF);
 
     private readonly ActionLog _actionLog;
@@ -31,6 +42,9 @@ public sealed class CleanupService
     private readonly Func<IReadOnlyList<CleanupTarget>> _targetsFactory;
     private readonly Func<(long Bytes, long Items)> _queryRecycleBin;
     private readonly Func<int> _emptyRecycleBin;
+    private readonly IReadOnlyList<ProtectedFolder> _protectedFolders;
+    private readonly Func<string?> _windowsUpdateBusyReason;
+    private readonly IReadOnlyList<string> _keepSubfolders;
 
     public CleanupService(ActionLog? actionLog = null, RestorePointService? restorePointService = null)
         : this(
@@ -38,7 +52,9 @@ public sealed class CleanupService
             restorePointService,
             BuildDefaultTargets,
             QueryWindowsRecycleBin,
-            EmptyWindowsRecycleBin)
+            EmptyWindowsRecycleBin,
+            protectedFolders: null,
+            windowsUpdateBusyReason: QueryWindowsUpdateBusyReason)
     {
     }
 
@@ -47,14 +63,33 @@ public sealed class CleanupService
         RestorePointService? restorePointService,
         Func<IReadOnlyList<CleanupTarget>> targetsFactory,
         Func<(long Bytes, long Items)>? queryRecycleBin = null,
-        Func<int>? emptyRecycleBin = null)
+        Func<int>? emptyRecycleBin = null,
+        IReadOnlyList<ProtectedFolder>? protectedFolders = null,
+        Func<string?>? windowsUpdateBusyReason = null,
+        IReadOnlyList<string>? keepSubfolders = null)
     {
         _actionLog = actionLog ?? new ActionLog();
         _restorePointService = restorePointService ?? new RestorePointService();
         _targetsFactory = targetsFactory ?? throw new ArgumentNullException(nameof(targetsFactory));
         _queryRecycleBin = queryRecycleBin ?? (() => (0L, 0L));
         _emptyRecycleBin = emptyRecycleBin ?? (() => 0);
+        _protectedFolders = protectedFolders ?? BuildDefaultProtectedFolders();
+        _windowsUpdateBusyReason = windowsUpdateBusyReason ?? (() => null);
+        _keepSubfolders = (keepSubfolders ?? BuildDefaultKeepSubfolders())
+            .Where(k => !string.IsNullOrWhiteSpace(k))
+            .Select(k => Path.TrimEndingDirectorySeparator(Path.GetFullPath(k)))
+            .ToList();
     }
+
+    /// <summary>
+    /// Sottocartelle che la pulizia salta sempre: la cartella dell'app (se gira da %TEMP%)
+    /// e %TEMP%\.net, dove .NET estrae i file degli exe in file singolo.
+    /// </summary>
+    internal static IReadOnlyList<string> BuildDefaultKeepSubfolders() =>
+    [
+        Path.GetFullPath(AppContext.BaseDirectory),
+        Path.Combine(Path.GetTempPath(), ".net"),
+    ];
 
     /// <summary>Analizza in sola lettura quanto spazio è possibile liberare.</summary>
     public List<PlannedChange> Scan(CancellationToken cancellationToken = default)
@@ -109,11 +144,42 @@ public sealed class CleanupService
                 continue;
             }
 
+            string? blockedReason = existingDirs
+                .Select(d => GetUnsafeDirectoryReason(d, _protectedFolders))
+                .FirstOrDefault(r => r is not null);
+            if (blockedReason is not null)
+            {
+                // La voce si mostra, non selezionata, con il motivo: non si misura e non si svuota.
+                results.Add(new PlannedChange
+                {
+                    Id = target.Id,
+                    Category = CategoryName,
+                    Title = target.Title,
+                    Explanation = "Voce saltata per sicurezza: " + blockedReason,
+                    TechnicalDetail = string.Join(" ; ", existingDirs),
+                    BeforeValue = "Non analizzata",
+                    AfterValue = "Nessuna modifica",
+                    EstimatedBytes = 0,
+                    RequiresAdmin = target.RequiresAdmin,
+                    IsReversible = false,
+                    IsSelected = false,
+                    TargetKey = target.Id,
+                    ActionKind = target.ActionKind,
+                    Metadata = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        [DirectoriesJsonKey] = JsonSerializer.Serialize(existingDirs),
+                        [BlockedReasonKey] = blockedReason,
+                    },
+                });
+                continue;
+            }
+
+            DateTime cutoffUtc = ComputeCutoffUtc(target.MinFileAge);
             long totalBytes = 0;
             int fileCount = 0;
             foreach (string dir in existingDirs)
             {
-                var (bytes, count) = MeasureDirectory(dir, cancellationToken);
+                var (bytes, count) = MeasureDirectory(dir, cutoffUtc, _keepSubfolders, cancellationToken);
                 totalBytes += bytes;
                 fileCount += count;
             }
@@ -124,12 +190,15 @@ public sealed class CleanupService
             }
 
             string formattedSize = Heuristics.FormatBytes(totalBytes);
+            string ageNote = target.MinFileAge > TimeSpan.Zero
+                ? $" I file toccati nelle ultime {target.MinFileAge.TotalHours:0} ore restano."
+                : "";
             results.Add(new PlannedChange
             {
                 Id = target.Id,
                 Category = CategoryName,
                 Title = target.Title,
-                Explanation = $"{target.Explanation} ({fileCount} file, circa {formattedSize}).",
+                Explanation = $"{target.Explanation} ({fileCount} file, circa {formattedSize}).{ageNote}",
                 TechnicalDetail = string.Join(" ; ", existingDirs) + $" · {fileCount} file · {totalBytes:N0} byte",
                 BeforeValue = $"{fileCount} file ({formattedSize})",
                 AfterValue = "Cartella pulita (i file in uso restano intatti)",
@@ -142,6 +211,7 @@ public sealed class CleanupService
                 Metadata = new Dictionary<string, string>(StringComparer.Ordinal)
                 {
                     [DirectoriesJsonKey] = JsonSerializer.Serialize(existingDirs),
+                    [MinFileAgeHoursKey] = target.MinFileAge.TotalHours.ToString(CultureInfo.InvariantCulture),
                 },
             });
         }
@@ -164,22 +234,32 @@ public sealed class CleanupService
             return new ActionExecutionResult(null, null, outcomes);
         }
 
+        // Se lo storico non si legge (file bloccato, permessi) non si comincia nemmeno.
+        _actionLog.EnsureAccessible();
+
         RestorePointResult? restorePoint = createRestorePoint
             ? _restorePointService.Create("W11-cleaner-tool: pulizia")
             : null;
-
-        var session = new ActionSession
+        if (ActionExecutionResult.IsMissing(createRestorePoint, restorePoint))
         {
-            TimestampUtc = DateTime.UtcNow,
-            RestorePointCreated = restorePoint?.Status == RestorePointStatus.Created,
-        };
+            return ActionExecutionResult.MissingRestorePoint(restorePoint!);
+        }
+
+        var recorder = new SessionRecorder(_actionLog, restorePoint?.Status == RestorePointStatus.Created);
 
         foreach (var change in selected)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             ActionItemOutcome outcome;
-            if (change.ActionKind == ActionKind.EmptyRecycleBin ||
+            string? updateBusy = change.ActionKind == ActionKind.CleanWindowsUpdateCache
+                ? _windowsUpdateBusyReason()
+                : null;
+            if (updateBusy is not null)
+            {
+                outcome = new ActionItemOutcome(change.Id, change.Title, Succeeded: false, updateBusy);
+            }
+            else if (change.ActionKind == ActionKind.EmptyRecycleBin ||
                 (change.Metadata.TryGetValue(IsRecycleBinKey, out string? isBin) && isBin == "true"))
             {
                 outcome = ApplyRecycleBin(change);
@@ -192,7 +272,7 @@ public sealed class CleanupService
             outcomes.Add(outcome);
             if (outcome.Succeeded)
             {
-                session.Entries.Add(new ActionLogEntry
+                recorder.Record(new ActionLogEntry
                 {
                     ActionKind = change.ActionKind,
                     Title = change.Title,
@@ -205,13 +285,7 @@ public sealed class CleanupService
             }
         }
 
-        if (session.Entries.Count > 0)
-        {
-            _actionLog.AddSession(session);
-            return new ActionExecutionResult(session, restorePoint, outcomes);
-        }
-
-        return new ActionExecutionResult(null, restorePoint, outcomes);
+        return new ActionExecutionResult(recorder.Complete(), restorePoint, outcomes);
     }
 
     public UndoOutcome UndoEntry(ActionLogEntry entry)
@@ -221,7 +295,9 @@ public sealed class CleanupService
             entry.Id,
             entry.Title,
             Succeeded: false,
-            "La pulizia di file temporanei e cache non si annulla: Windows e i browser li ricreano automaticamente quando servono.");
+            entry.ActionKind == ActionKind.EmptyRecycleBin
+                ? "Lo svuotamento del Cestino non si annulla: i file sono stati eliminati definitivamente."
+                : "La pulizia di file temporanei e cache non si annulla: i file sono stati eliminati (Windows e i browser ricreano quelli che servono).");
     }
 
     private ActionItemOutcome ApplyRecycleBin(PlannedChange change)
@@ -252,7 +328,7 @@ public sealed class CleanupService
         }
     }
 
-    private static ActionItemOutcome ApplyDirectoryCleanup(PlannedChange change, CancellationToken ct)
+    private ActionItemOutcome ApplyDirectoryCleanup(PlannedChange change, CancellationToken ct)
     {
         List<string> dirs = ResolveDirectories(change);
         if (dirs.Count == 0)
@@ -260,9 +336,18 @@ public sealed class CleanupService
             return new ActionItemOutcome(change.Id, change.Title, Succeeded: false, "Nessuna cartella valida specificata.");
         }
 
-        long bytesFreed = 0;
-        int deletedFiles = 0;
-        int skippedFiles = 0;
+        // Il controllo si rifà qui, sul percorso vero: l'anteprima non basta.
+        foreach (string dir in dirs)
+        {
+            string? reason = GetUnsafeDirectoryReason(dir, _protectedFolders);
+            if (reason is not null)
+            {
+                return new ActionItemOutcome(change.Id, change.Title, Succeeded: false, "Voce saltata per sicurezza: " + reason);
+            }
+        }
+
+        DateTime cutoffUtc = ComputeCutoffUtc(ReadMinFileAge(change));
+        var counters = new CleanCounters();
 
         foreach (string dir in dirs)
         {
@@ -272,24 +357,185 @@ public sealed class CleanupService
                 continue;
             }
 
-            var (freed, deleted, skipped) = CleanDirectoryContents(dir, ct);
-            bytesFreed += freed;
-            deletedFiles += deleted;
-            skippedFiles += skipped;
+            CleanRecursive(dir, isRoot: true, _keepSubfolders, cutoffUtc, counters, ct);
         }
 
-        if (deletedFiles == 0 && skippedFiles > 0)
+        if (counters.Deleted == 0 && counters.Skipped > 0)
         {
             string msg = change.RequiresAdmin && !RestorePointService.IsAdministrator()
                 ? "Servono i diritti di amministratore per eliminare questi file."
-                : $"Tutti i file trovati ({skippedFiles}) erano in uso o protetti.";
+                : $"Tutti i file trovati ({counters.Skipped}) erano in uso o protetti.";
             return new ActionItemOutcome(change.Id, change.Title, Succeeded: false, msg);
         }
 
-        string detail = skippedFiles > 0
-            ? $"Eliminati {deletedFiles} file ({Heuristics.FormatBytes(bytesFreed)}), {skippedFiles} in uso saltati."
-            : $"Eliminati {deletedFiles} file ({Heuristics.FormatBytes(bytesFreed)}).";
-        return new ActionItemOutcome(change.Id, change.Title, Succeeded: true, detail, bytesFreed);
+        var parts = new List<string>
+        {
+            $"Eliminati {counters.Deleted} file ({Heuristics.FormatBytes(counters.Freed)})",
+        };
+        if (counters.Skipped > 0)
+        {
+            parts.Add($"{counters.Skipped} in uso saltati");
+        }
+
+        if (counters.Recent > 0)
+        {
+            parts.Add($"{counters.Recent} recenti (ultime 24 ore) lasciati");
+        }
+
+        return new ActionItemOutcome(change.Id, change.Title, Succeeded: true, string.Join(", ", parts) + ".", counters.Freed);
+    }
+
+    private static TimeSpan ReadMinFileAge(PlannedChange change)
+    {
+        if (change.Metadata.TryGetValue(MinFileAgeHoursKey, out string? raw) &&
+            double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out double hours) &&
+            hours > 0)
+        {
+            return TimeSpan.FromHours(hours);
+        }
+
+        return TimeSpan.Zero;
+    }
+
+    private static DateTime ComputeCutoffUtc(TimeSpan minFileAge)
+        => minFileAge > TimeSpan.Zero ? DateTime.UtcNow - minFileAge : DateTime.MaxValue;
+
+    private static bool IsRecent(FileInfo file, DateTime cutoffUtc)
+    {
+        if (cutoffUtc == DateTime.MaxValue)
+        {
+            return false;
+        }
+
+        // Si guarda anche la data di creazione: un file estratto da un archivio può avere una data di modifica vecchia.
+        DateTime lastTouch = file.LastWriteTimeUtc > file.CreationTimeUtc ? file.LastWriteTimeUtc : file.CreationTimeUtc;
+        return lastTouch > cutoffUtc;
+    }
+
+    /// <summary>
+    /// Restituisce il motivo per cui una cartella non va mai svuotata (radice di un disco, profilo utente,
+    /// cartelle personali, Windows, Programmi), oppure null se si può pulire.
+    /// </summary>
+    internal static string? GetUnsafeDirectoryReason(string directory, IReadOnlyList<ProtectedFolder> protectedFolders)
+    {
+        string full;
+        try
+        {
+            full = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or SecurityException)
+        {
+            return $"il percorso «{directory}» non è valido.";
+        }
+
+        string? root = Path.GetPathRoot(full);
+        if (!string.IsNullOrEmpty(root) &&
+            string.Equals(Path.TrimEndingDirectorySeparator(root), full, StringComparison.OrdinalIgnoreCase))
+        {
+            return $"«{full}» è la radice di un disco: svuotarla cancellerebbe tutto il disco.";
+        }
+
+        foreach (var folder in protectedFolders)
+        {
+            if (string.IsNullOrWhiteSpace(folder.Path))
+            {
+                continue;
+            }
+
+            string protectedPath;
+            try
+            {
+                protectedPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder.Path));
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or SecurityException)
+            {
+                continue;
+            }
+
+            if (IsSameOrInside(protectedPath, full))
+            {
+                return $"«{full}» è {folder.Label} o la contiene: svuotarla cancellerebbe file personali o di sistema.";
+            }
+
+            if (folder.ProtectInside && IsSameOrInside(full, protectedPath))
+            {
+                return $"«{full}» è dentro {folder.Label}: svuotarla cancellerebbe file personali o di sistema.";
+            }
+        }
+
+        return null;
+    }
+
+    internal static IReadOnlyList<ProtectedFolder> BuildDefaultProtectedFolders()
+    {
+        var list = new List<ProtectedFolder>();
+        string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        string trimmedProfile = string.IsNullOrWhiteSpace(profile) ? "" : Path.TrimEndingDirectorySeparator(profile);
+
+        void Add(string path, string label, bool protectInside)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            // Se una cartella personale coincide con il profilo (configurazioni insolite), non si blocca tutto il profilo:
+            // %TEMP% sta dentro il profilo e deve restare pulibile.
+            bool sameAsProfile = trimmedProfile.Length > 0 &&
+                string.Equals(Path.TrimEndingDirectorySeparator(path), trimmedProfile, StringComparison.OrdinalIgnoreCase);
+            list.Add(new ProtectedFolder(path, label, protectInside && !sameAsProfile));
+        }
+
+        Add(profile, "il profilo utente", protectInside: false);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "il Desktop", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "la cartella Documenti", protectInside: true);
+        Add(string.IsNullOrWhiteSpace(profile) ? "" : Path.Combine(profile, "Downloads"), "la cartella Download", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "la cartella Immagini", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.MyVideos), "la cartella Video", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "la cartella Musica", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "la cartella di Windows", protectInside: false);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.System), "la cartella di sistema di Windows", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), "la cartella di sistema di Windows", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "la cartella Programmi", protectInside: true);
+        Add(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "la cartella Programmi (x86)", protectInside: true);
+        return list;
+    }
+
+    private static bool IsSameOrInside(string path, string parent)
+    {
+        if (string.Equals(path, parent, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        string parentWithSep = parent.EndsWith(Path.DirectorySeparatorChar) || parent.EndsWith(Path.AltDirectorySeparatorChar)
+            ? parent
+            : parent + Path.DirectorySeparatorChar;
+        return path.StartsWith(parentWithSep, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string? QueryWindowsUpdateBusyReason()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return null;
+        }
+
+        try
+        {
+            var running = Wmi.Query("SELECT Name, State FROM Win32_Service WHERE Name = 'wuauserv' OR Name = 'BITS'")
+                .Where(r => string.Equals(r.Str("State"), "Running", StringComparison.OrdinalIgnoreCase))
+                .Select(r => r.Str("Name"))
+                .ToList();
+
+            return running.Count == 0
+                ? null
+                : $"Windows Update è attivo (servizio {string.Join(" e ", running)} in esecuzione): riprova più tardi. Il programma non ferma i servizi da solo.";
+        }
+        catch (Exception ex) when (ex is ManagementException or COMException or UnauthorizedAccessException)
+        {
+            return "Non riesco a verificare se Windows Update è attivo: per sicurezza la cache non si tocca. Riprova più tardi.";
+        }
     }
 
     private static List<string> ResolveDirectories(PlannedChange change)
@@ -323,14 +569,16 @@ public sealed class CleanupService
                 Explanation: "File temporanei nella cartella %TEMP% dell'utente.",
                 ActionKind: ActionKind.CleanTempFiles,
                 Directories: [userTemp],
-                RequiresAdmin: false),
+                RequiresAdmin: false,
+                MinFileAge: TempMinFileAge),
             new(
                 Id: "cleanup-windows-temp",
                 Title: "File temporanei di Windows",
                 Explanation: "File temporanei di sistema in Windows\\Temp.",
                 ActionKind: ActionKind.CleanTempFiles,
                 Directories: [Path.Combine(windowsDir, "Temp")],
-                RequiresAdmin: true),
+                RequiresAdmin: true,
+                MinFileAge: TempMinFileAge),
             new(
                 Id: "cleanup-windows-update",
                 Title: "Cache di Windows Update",
@@ -465,12 +713,14 @@ public sealed class CleanupService
         return dirs;
     }
 
-    private static (long Bytes, int Files) MeasureDirectory(string rootDir, CancellationToken ct)
+    private static (long Bytes, int Files) MeasureDirectory(
+        string rootDir,
+        DateTime cutoffUtc,
+        IReadOnlyList<string> keepSubfolders,
+        CancellationToken ct)
     {
         long bytes = 0;
         int files = 0;
-        string appDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(AppContext.BaseDirectory));
-        string netExtractDir = Path.TrimEndingDirectorySeparator(Path.Combine(Path.GetTempPath(), ".net"));
 
         var stack = new Stack<string>();
         stack.Push(rootDir);
@@ -480,7 +730,7 @@ public sealed class CleanupService
             ct.ThrowIfCancellationRequested();
             string current = stack.Pop();
 
-            if (IsProtectedTempSubfolder(current, appDir, netExtractDir))
+            if (IsProtectedTempSubfolder(current, keepSubfolders))
             {
                 continue;
             }
@@ -496,6 +746,11 @@ public sealed class CleanupService
                 foreach (var file in dirInfo.EnumerateFiles())
                 {
                     ct.ThrowIfCancellationRequested();
+                    if (IsRecent(file, cutoffUtc))
+                    {
+                        continue;
+                    }
+
                     bytes += file.Length;
                     files++;
                 }
@@ -517,31 +772,25 @@ public sealed class CleanupService
         return (bytes, files);
     }
 
-    private static (long Freed, int Deleted, int Skipped) CleanDirectoryContents(string rootDir, CancellationToken ct)
+    private sealed class CleanCounters
     {
-        long freed = 0;
-        int deleted = 0;
-        int skipped = 0;
-        string appDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(AppContext.BaseDirectory));
-        string netExtractDir = Path.TrimEndingDirectorySeparator(Path.Combine(Path.GetTempPath(), ".net"));
-
-        CleanRecursive(rootDir, isRoot: true, appDir, netExtractDir, ref freed, ref deleted, ref skipped, ct);
-        return (freed, deleted, skipped);
+        public long Freed;
+        public int Deleted;
+        public int Skipped;
+        public int Recent;
     }
 
     private static void CleanRecursive(
         string currentDir,
         bool isRoot,
-        string appDir,
-        string netExtractDir,
-        ref long freed,
-        ref int deleted,
-        ref int skipped,
+        IReadOnlyList<string> keepSubfolders,
+        DateTime cutoffUtc,
+        CleanCounters counters,
         CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        if (!isRoot && IsProtectedTempSubfolder(currentDir, appDir, netExtractDir))
+        if (!isRoot && IsProtectedTempSubfolder(currentDir, keepSubfolders))
         {
             return;
         }
@@ -557,7 +806,8 @@ public sealed class CleanupService
 
             foreach (var sub in dirInfo.EnumerateDirectories())
             {
-                CleanRecursive(sub.FullName, isRoot: false, appDir, netExtractDir, ref freed, ref deleted, ref skipped, ct);
+                // Junction e collegamenti simbolici non si seguono: CleanRecursive si ferma sui reparse point.
+                CleanRecursive(sub.FullName, isRoot: false, keepSubfolders, cutoffUtc, counters, ct);
             }
 
             foreach (var file in dirInfo.EnumerateFiles())
@@ -565,6 +815,12 @@ public sealed class CleanupService
                 ct.ThrowIfCancellationRequested();
                 try
                 {
+                    if (IsRecent(file, cutoffUtc))
+                    {
+                        counters.Recent++;
+                        continue;
+                    }
+
                     long len = file.Length;
                     if ((file.Attributes & FileAttributes.ReadOnly) != 0)
                     {
@@ -572,12 +828,12 @@ public sealed class CleanupService
                     }
 
                     file.Delete();
-                    freed += len;
-                    deleted++;
+                    counters.Freed += len;
+                    counters.Deleted++;
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
                 {
-                    skipped++;
+                    counters.Skipped++;
                 }
             }
 
@@ -595,15 +851,14 @@ public sealed class CleanupService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
         {
-            skipped++;
+            counters.Skipped++;
         }
     }
 
-    private static bool IsProtectedTempSubfolder(string path, string appDir, string netExtractDir)
+    private static bool IsProtectedTempSubfolder(string path, IReadOnlyList<string> keepSubfolders)
     {
         string normalized = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
-        return string.Equals(normalized, appDir, StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(normalized, netExtractDir, StringComparison.OrdinalIgnoreCase);
+        return keepSubfolders.Any(k => string.Equals(normalized, k, StringComparison.OrdinalIgnoreCase));
     }
 
     private static (long Bytes, long Items) QueryWindowsRecycleBin()

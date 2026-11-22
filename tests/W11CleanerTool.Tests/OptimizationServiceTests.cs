@@ -94,6 +94,36 @@ public sealed class OptimizationServiceTests : IDisposable
         Assert.Equal(NativeMethods.ExecutionState.ES_CONTINUOUS, calls[1]);
     }
 
+    [Fact]
+    public void PowerPlanChange_ActivePlanNotFound_IsNotApplied()
+    {
+        var powerCfgCalls = new List<string>();
+        var log = new ActionLog(Path.Combine(_tempDir, "history.json"));
+        var service = new OptimizationService(log, new RestorePointService(), new FakeStartupStore(), args =>
+        {
+            powerCfgCalls.Add(args);
+            return (0, "uscita illeggibile", ""); // nessun piano riconoscibile
+        });
+
+        var change = new PlannedChange
+        {
+            Id = "powerplan:test",
+            Category = "Piano energetico",
+            Title = "Piano energetico: Prestazioni elevate",
+            Explanation = "Test",
+            AfterValue = "Prestazioni elevate",
+            IsSelected = true,
+            TargetKey = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
+            ActionKind = ActionKind.PowerPlanChange,
+            Metadata = new Dictionary<string, string> { ["OldGuid"] = "381b4222-f694-41f0-9685-ff5bb260df2e" },
+        };
+
+        var result = service.Apply([change]);
+        Assert.Equal(1, result.FailedCount);
+        Assert.DoesNotContain(powerCfgCalls, c => c.StartsWith("/setactive", StringComparison.Ordinal));
+        Assert.Empty(log.ReadSessions());
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDir))

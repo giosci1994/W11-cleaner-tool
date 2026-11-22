@@ -16,9 +16,23 @@ public sealed record ActionExecutionResult(
     RestorePointResult? RestorePoint,
     IReadOnlyList<ActionItemOutcome> Outcomes)
 {
+    /// <summary>
+    /// True se il punto di ripristino era richiesto ma non è stato creato: non è stato applicato niente
+    /// e l'interfaccia deve chiedere se continuare senza punto di ripristino.
+    /// </summary>
+    public bool StoppedForMissingRestorePoint { get; init; }
+
     public int SucceededCount => Outcomes.Count(o => o.Succeeded);
     public int FailedCount => Outcomes.Count(o => !o.Succeeded);
     public long TotalBytesFreed => Outcomes.Sum(o => o.BytesFreed);
+
+    /// <summary>Esito «fermato prima di cominciare» perché il punto di ripristino richiesto non c'è.</summary>
+    public static ActionExecutionResult MissingRestorePoint(RestorePointResult restorePoint)
+        => new(null, restorePoint, Array.Empty<ActionItemOutcome>()) { StoppedForMissingRestorePoint = true };
+
+    /// <summary>True se il punto di ripristino era richiesto e non risulta creato.</summary>
+    internal static bool IsMissing(bool requested, RestorePointResult? restorePoint)
+        => requested && restorePoint?.Status != RestorePointStatus.Created;
 }
 
 /// <summary>Esito dell'annullamento di una voce dello storico.</summary>

@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Security;
-using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using W11CleanerTool.Core.Safety;
@@ -157,15 +155,18 @@ public sealed class OptimizationService
             return new ActionExecutionResult(null, null, outcomes);
         }
 
+        // Se lo storico non si legge (file bloccato, permessi) non si comincia nemmeno.
+        _actionLog.EnsureAccessible();
+
         RestorePointResult? restorePoint = createRestorePoint
             ? _restorePointService.Create("W11-cleaner-tool: ottimizzazione")
             : null;
-
-        var session = new ActionSession
+        if (ActionExecutionResult.IsMissing(createRestorePoint, restorePoint))
         {
-            TimestampUtc = DateTime.UtcNow,
-            RestorePointCreated = restorePoint?.Status == RestorePointStatus.Created,
-        };
+            return ActionExecutionResult.MissingRestorePoint(restorePoint!);
+        }
+
+        var recorder = new SessionRecorder(_actionLog, restorePoint?.Status == RestorePointStatus.Created);
 
         foreach (var change in selected)
         {
@@ -182,17 +183,11 @@ public sealed class OptimizationService
             outcomes.Add(outcome);
             if (outcome.Succeeded && entry is not null)
             {
-                session.Entries.Add(entry);
+                recorder.Record(entry);
             }
         }
 
-        if (session.Entries.Count > 0)
-        {
-            _actionLog.AddSession(session);
-            return new ActionExecutionResult(session, restorePoint, outcomes);
-        }
-
-        return new ActionExecutionResult(null, restorePoint, outcomes);
+        return new ActionExecutionResult(recorder.Complete(), restorePoint, outcomes);
     }
 
     /// <summary>Annulla una modifica registrata da OptimizationService.</summary>
@@ -344,16 +339,23 @@ public sealed class OptimizationService
             return (new ActionItemOutcome(change.Id, change.Title, false, "GUID piano energetico non valido."), null);
         }
 
-        string oldGuidStr = "";
+        // Senza il piano attivo letto adesso non si potrebbe annullare: in quel caso non si cambia niente.
         var currentActive = GetPowerPlans().FirstOrDefault(p => p.IsActive);
-        if (currentActive is not null)
+        if (currentActive is null)
         {
-            oldGuidStr = currentActive.Guid.ToString("D");
+            return (new ActionItemOutcome(
+                change.Id,
+                change.Title,
+                false,
+                "Non riesco a leggere il piano energetico attivo: senza quello non si potrebbe annullare, quindi non cambio niente."), null);
         }
-        else if (change.Metadata.TryGetValue("OldGuid", out string? metaOld))
+
+        if (currentActive.Guid == newGuid)
         {
-            oldGuidStr = metaOld;
+            return (new ActionItemOutcome(change.Id, change.Title, false, $"«{change.AfterValue}» è già il piano attivo."), null);
         }
+
+        string oldGuidStr = currentActive.Guid.ToString("D");
 
         var (exitCode, _, error) = _runPowerCfg($"/setactive {newGuid:D}");
         if (exitCode != 0)
@@ -388,34 +390,10 @@ public sealed class OptimizationService
         return scope is ScopeHkcuRun or ScopeHklmRun or ScopeStartupFolder;
     }
 
+    // powercfg scrive con la codifica OEM della console quando l'uscita è rediretta (non UTF-8):
+    // con UTF-8 i nomi accentati dei piani («Prestazioni elevate», «Équilibré»…) arriverebbero storpiati.
     private static (int ExitCode, string Output, string Error) RunPowerCfgProcess(string arguments)
-    {
-        try
-        {
-            using var process = new Process
-            {
-                StartInfo = new ProcessStartInfo("powercfg.exe", arguments)
-                {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8,
-                },
-            };
-
-            process.Start();
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit(15_000);
-            return (process.ExitCode, stdout, stderr);
-        }
-        catch (Exception ex)
-        {
-            return (-1, "", ex.Message);
-        }
-    }
+        => ProcessRunner.Run("powercfg.exe", arguments, ProcessRunner.GetOemConsoleEncoding(), TimeSpan.FromSeconds(15));
 
     private sealed class WindowsStartupStore : IStartupStore
     {

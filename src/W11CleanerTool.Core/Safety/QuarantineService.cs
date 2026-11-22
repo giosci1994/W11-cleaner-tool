@@ -14,6 +14,21 @@ public sealed class QuarantineItem
     public DateTime QuarantinedAtUtc { get; set; } = DateTime.UtcNow;
     public long SizeBytes { get; set; }
     public string Sha256 { get; set; } = "";
+
+    /// <summary>
+    /// True se il file veniva da un altro disco: è stato copiato (e verificato) sul disco della quarantena,
+    /// quindi lo spazio si è liberato sul disco di origine ma è occupato su quello della quarantena.
+    /// </summary>
+    public bool FromOtherDrive { get; set; }
+}
+
+/// <summary>Il file è cambiato rispetto all'impronta SHA256 attesa: non si sposta.</summary>
+public sealed class QuarantineHashMismatchException : IOException
+{
+    public QuarantineHashMismatchException(string message)
+        : base(message)
+    {
+    }
 }
 
 public sealed record QuarantineRestoreResult(bool Success, string Message, string? RestoredPath = null);
@@ -21,10 +36,15 @@ public sealed record QuarantineRestoreResult(bool Success, string Message, strin
 /// <summary>
 /// Gestisce la quarantena dei file utente in %LOCALAPPDATA%\W11-cleaner-tool\quarantine\&lt;sessione&gt;\
 /// salvando manifest.json con percorso originale, data UTC, dimensione e SHA256.
+/// I file di un altro disco si copiano, si verificano con SHA256 e solo dopo si cancella l'originale;
+/// prima si controlla che sul disco della quarantena ci sia spazio.
 /// </summary>
 public sealed class QuarantineService
 {
     private const string ManifestFileName = "manifest.json";
+
+    /// <summary>Spazio che deve restare libero sul disco della quarantena dopo la copia di un file da un altro disco.</summary>
+    internal const long FreeSpaceMarginBytes = 1024L * 1024 * 1024;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -32,12 +52,25 @@ public sealed class QuarantineService
     };
 
     private readonly object _sync = new();
+    private readonly Func<string, string, bool> _isSameVolume;
+    private readonly Func<string, long?> _freeSpace;
 
     public QuarantineService(string? rootDirectory = null)
+        : this(rootDirectory, null, null)
+    {
+    }
+
+    /// <summary>Per i test: permette di simulare un altro disco e lo spazio libero.</summary>
+    internal QuarantineService(
+        string? rootDirectory,
+        Func<string, string, bool>? isSameVolume,
+        Func<string, long?>? freeSpace)
     {
         RootDirectory = string.IsNullOrWhiteSpace(rootDirectory)
             ? DefaultRootDirectory
             : Path.GetFullPath(rootDirectory);
+        _isSameVolume = isSameVolume ?? ((a, b) => IsSameVolume(a, b));
+        _freeSpace = freeSpace ?? (d => GetFreeSpace(d));
     }
 
     public static string DefaultRootDirectory => Path.Combine(
@@ -47,11 +80,14 @@ public sealed class QuarantineService
 
     public string RootDirectory { get; }
 
-    /// <summary>Sposta un file nella quarantena di sessione registrandolo nel manifest.json.</summary>
-    public QuarantineItem MoveToQuarantine(string sourcePath, string? sessionId = null)
-        => MoveToQuarantine(sourcePath, sessionId, DateTime.UtcNow);
+    /// <summary>
+    /// Sposta un file nella quarantena di sessione registrandolo nel manifest.json.
+    /// Con <paramref name="expectedSha256"/> il file si sposta solo se la sua impronta è ancora quella attesa.
+    /// </summary>
+    public QuarantineItem MoveToQuarantine(string sourcePath, string? sessionId = null, string? expectedSha256 = null)
+        => MoveToQuarantine(sourcePath, sessionId, DateTime.UtcNow, expectedSha256);
 
-    internal QuarantineItem MoveToQuarantine(string sourcePath, string? sessionId, DateTime timestampUtc)
+    internal QuarantineItem MoveToQuarantine(string sourcePath, string? sessionId, DateTime timestampUtc, string? expectedSha256 = null)
     {
         if (string.IsNullOrWhiteSpace(sourcePath))
         {
@@ -69,15 +105,29 @@ public sealed class QuarantineService
         var fileInfo = new FileInfo(fullSource);
         long size = fileInfo.Length;
         string sha256 = ComputeSha256(fullSource);
+        if (!string.IsNullOrWhiteSpace(expectedSha256) &&
+            !string.Equals(sha256, expectedSha256.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new QuarantineHashMismatchException(
+                "Il file è cambiato dopo l'analisi (SHA256 diverso): per sicurezza resta dov'è. Rifai la ricerca.");
+        }
 
         string sessionDir = Path.Combine(RootDirectory, safeSession);
         string destName = $"{id}_{Path.GetFileName(fullSource)}";
         string destPath = Path.Combine(sessionDir, destName);
+        bool fromOtherDrive = !_isSameVolume(fullSource, RootDirectory);
 
         lock (_sync)
         {
             Directory.CreateDirectory(sessionDir);
-            File.Move(fullSource, destPath);
+            if (fromOtherDrive)
+            {
+                CopyVerifyAndDelete(fullSource, destPath, size, sha256);
+            }
+            else
+            {
+                File.Move(fullSource, destPath);
+            }
 
             var item = new QuarantineItem
             {
@@ -88,6 +138,7 @@ public sealed class QuarantineService
                 QuarantinedAtUtc = timestampUtc,
                 SizeBytes = size,
                 Sha256 = sha256,
+                FromOtherDrive = fromOtherDrive,
             };
 
             string manifestPath = Path.Combine(sessionDir, ManifestFileName);
@@ -147,6 +198,19 @@ public sealed class QuarantineService
                 if (!File.Exists(item.QuarantinedPath))
                 {
                     return new QuarantineRestoreResult(false, "Il file non è più presente nella cartella di quarantena.");
+                }
+
+                // Prima di rimetterlo a posto si controlla che sia ancora quello messo in quarantena.
+                if (!string.IsNullOrWhiteSpace(item.Sha256))
+                {
+                    string currentHash = ComputeSha256(item.QuarantinedPath);
+                    if (!string.Equals(currentHash, item.Sha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new QuarantineRestoreResult(
+                            false,
+                            "Il file in quarantena non è più uguale a quello salvato (SHA256 diverso): non lo ripristino in automatico. " +
+                            $"Lo trovi in {item.QuarantinedPath}; controllalo e, se ti serve, copialo tu.");
+                    }
                 }
 
                 string targetPath = ResolveRestoreTargetPath(item.OriginalPath);
@@ -228,6 +292,80 @@ public sealed class QuarantineService
         }
 
         return purged;
+    }
+
+    private void CopyVerifyAndDelete(string source, string destination, long size, string expectedSha256)
+    {
+        long? free = _freeSpace(RootDirectory);
+        if (free is long available && available - size < FreeSpaceMarginBytes)
+        {
+            throw new IOException(
+                $"Spazio insufficiente sul disco della quarantena: servono {Heuristics.FormatBytes(size)} più " +
+                $"{Heuristics.FormatBytes(FreeSpaceMarginBytes)} di margine, liberi {Heuristics.FormatBytes(available)}. Il file resta dov'è.");
+        }
+
+        File.Copy(source, destination, overwrite: false);
+        string copiedHash;
+        try
+        {
+            copiedHash = ComputeSha256(destination);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            TryDelete(destination);
+            throw;
+        }
+
+        if (!string.Equals(copiedHash, expectedSha256, StringComparison.OrdinalIgnoreCase))
+        {
+            TryDelete(destination);
+            throw new QuarantineHashMismatchException("La copia in quarantena non è uguale all'originale (SHA256 diverso): l'originale resta dov'è.");
+        }
+
+        try
+        {
+            File.Delete(source);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            TryDelete(destination);
+            throw;
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Resta una copia in più nella quarantena: l'originale è comunque al suo posto.
+        }
+    }
+
+    internal static bool IsSameVolume(string pathA, string pathB)
+    {
+        string? rootA = Path.GetPathRoot(Path.GetFullPath(pathA));
+        string? rootB = Path.GetPathRoot(Path.GetFullPath(pathB));
+        return !string.IsNullOrEmpty(rootA) && string.Equals(rootA, rootB, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static long? GetFreeSpace(string directory)
+    {
+        try
+        {
+            string? root = Path.GetPathRoot(Path.GetFullPath(directory));
+            return string.IsNullOrEmpty(root) ? null : new DriveInfo(root).AvailableFreeSpace;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return null;
+        }
     }
 
     private static string ResolveRestoreTargetPath(string originalPath)

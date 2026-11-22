@@ -110,6 +110,78 @@ public sealed class QuarantineServiceTests : IDisposable
         Assert.Equal(freshItem.Id, remaining[0].Id);
     }
 
+    [Fact]
+    public void MoveToQuarantine_FromOtherDrive_CopiesVerifiesAndDeletesOriginal()
+    {
+        string workDir = Path.Combine(_tempDir, "altro-disco");
+        Directory.CreateDirectory(workDir);
+        string file = Path.Combine(workDir, "video.bin");
+        byte[] content = Encoding.UTF8.GetBytes("contenuto da un altro disco");
+        File.WriteAllBytes(file, content);
+
+        // Si simula un file su un altro disco con molto spazio libero sul disco della quarantena.
+        var service = new QuarantineService(Path.Combine(_tempDir, "q"), (_, _) => false, _ => long.MaxValue / 2);
+        var item = service.MoveToQuarantine(file, "s1");
+
+        Assert.True(item.FromOtherDrive);
+        Assert.False(File.Exists(file));
+        Assert.Equal(content, File.ReadAllBytes(item.QuarantinedPath));
+        Assert.True(service.ListItems().Single().FromOtherDrive);
+
+        var restore = service.RestoreItem(item.Id);
+        Assert.True(restore.Success);
+        Assert.Equal(content, File.ReadAllBytes(file));
+    }
+
+    [Fact]
+    public void MoveToQuarantine_FromOtherDrive_NotEnoughSpace_LeavesFile()
+    {
+        string workDir = Path.Combine(_tempDir, "poco-spazio");
+        Directory.CreateDirectory(workDir);
+        string file = Path.Combine(workDir, "grande.bin");
+        File.WriteAllText(file, "grande");
+
+        var service = new QuarantineService(Path.Combine(_tempDir, "q"), (_, _) => false, _ => 10);
+        var ex = Assert.Throws<IOException>(() => service.MoveToQuarantine(file, "s1"));
+
+        Assert.Contains("Spazio insufficiente", ex.Message);
+        Assert.True(File.Exists(file));
+        Assert.Empty(service.ListItems());
+    }
+
+    [Fact]
+    public void MoveToQuarantine_ExpectedHashMismatch_LeavesFile()
+    {
+        string workDir = Path.Combine(_tempDir, "hash");
+        Directory.CreateDirectory(workDir);
+        string file = Path.Combine(workDir, "doc.txt");
+        File.WriteAllText(file, "testo");
+
+        var service = new QuarantineService(Path.Combine(_tempDir, "q"));
+        Assert.Throws<QuarantineHashMismatchException>(() => service.MoveToQuarantine(file, "s1", new string('0', 64)));
+        Assert.True(File.Exists(file));
+    }
+
+    [Fact]
+    public void RestoreItem_QuarantinedFileChanged_IsNotRestoredSilently()
+    {
+        string workDir = Path.Combine(_tempDir, "manomesso");
+        Directory.CreateDirectory(workDir);
+        string file = Path.Combine(workDir, "foto.txt");
+        File.WriteAllText(file, "originale");
+
+        var service = new QuarantineService(Path.Combine(_tempDir, "q"));
+        var item = service.MoveToQuarantine(file, "s1");
+        File.WriteAllText(item.QuarantinedPath, "cambiato");
+
+        var restore = service.RestoreItem(item.Id);
+        Assert.False(restore.Success);
+        Assert.Contains("SHA256", restore.Message);
+        Assert.False(File.Exists(file));
+        Assert.True(File.Exists(item.QuarantinedPath));
+        Assert.Single(service.ListItems());
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_tempDir))

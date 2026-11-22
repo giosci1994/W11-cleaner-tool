@@ -165,7 +165,8 @@ public sealed class HistoryEntryItem
         TimestampText = entry.TimestampUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
         Undone = entry.Undone;
 
-        bool reversible = IsReversibleKind(entry.ActionKind);
+        // Un file eliminato definitivamente dalla quarantena non si può più ripristinare: niente «Annulla» che poi fallisce.
+        bool reversible = IsReversibleKind(entry.ActionKind) && !entry.QuarantinePurged;
         CanUndo = !entry.Undone && reversible;
         ShowNonReversibleNote = !entry.Undone && !reversible;
         ShowExpertDetails = expert;
@@ -174,6 +175,11 @@ public sealed class HistoryEntryItem
         {
             StatusText = "Annullata";
             StatusColor = UiBrushes.Green;
+        }
+        else if (entry.QuarantinePurged)
+        {
+            StatusText = "Eliminato dalla quarantena";
+            StatusColor = UiBrushes.Muted;
         }
         else if (!reversible)
         {

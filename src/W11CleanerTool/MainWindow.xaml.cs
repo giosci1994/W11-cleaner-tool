@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Security.Principal;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -60,6 +61,9 @@ public partial class MainWindow : Window
     private ActiveSection _activeSection = ActiveSection.None;
     private CancellationTokenSource? _scanCts;
     private bool _busy;
+
+    /// <summary>Vero solo mentre si modifica il sistema (applica, annulla, ripristina, svuota): allora la finestra non si chiude.</summary>
+    private bool _modifying;
     private bool _updatingKeepAwakeToggle;
     private readonly bool _initialized;
 
@@ -83,6 +87,22 @@ public partial class MainWindow : Window
         int plus = version.IndexOf('+');
         Title = $"W11-cleaner-tool {(plus > 0 ? version[..plus] : version)}{(_isAdmin ? " \u00B7 amministratore" : "")}";
 
+        string? accountWarning = BuildAccountWarning();
+        if (accountWarning is not null)
+        {
+            // Avviso fisso sotto il titolo, più un messaggio all'apertura.
+            Title += " \u00B7 account diverso";
+            SubtitleText.Text = accountWarning;
+            SubtitleText.Foreground = UiBrushes.Orange;
+            SubtitleText.Opacity = 1;
+            Loaded += (_, _) => MessageBox.Show(
+                this,
+                accountWarning,
+                "Account diverso \u00B7 W11-cleaner-tool",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+
         ExpertToggle.IsChecked = _settings.ExpertMode;
         _initialized = true;
         ApplyMode();
@@ -90,6 +110,26 @@ public partial class MainWindow : Window
     }
 
     private bool Expert => ExpertToggle.IsChecked == true;
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (_modifying)
+        {
+            // Chiudere a metà lascerebbe modifiche applicate senza esito: si aspetta la fine.
+            e.Cancel = true;
+            MessageBox.Show(
+                this,
+                "C'è un'operazione in corso: aspetta che finisca prima di chiudere l'app.",
+                "W11-cleaner-tool",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        // Un'analisi in sola lettura si può interrompere: si annulla e si chiude.
+        _scanCts?.Cancel();
+        base.OnClosing(e);
+    }
 
     protected override void OnClosed(EventArgs e)
     {
@@ -201,10 +241,10 @@ public partial class MainWindow : Window
             HistoryButton,
         ];
 
+        // Lo stile NavItem (MainWindow.xaml) evidenzia la voce con Tag="active".
         foreach (var btn in allNav)
         {
-            btn.ClearValue(BorderBrushProperty);
-            btn.ClearValue(BorderThicknessProperty);
+            btn.Tag = null;
         }
 
         Button? active = section switch
@@ -223,8 +263,7 @@ public partial class MainWindow : Window
 
         if (active is not null)
         {
-            active.BorderBrush = UiBrushes.Blue;
-            active.BorderThickness = new Thickness(2);
+            active.Tag = "active";
         }
     }
 
@@ -247,6 +286,7 @@ public partial class MainWindow : Window
         RefreshHistoryButton.IsEnabled = enabled;
         RefreshQuarantineButton.IsEnabled = enabled;
         PurgeExpiredButton.IsEnabled = enabled;
+        ElevateButton.IsEnabled = enabled;
         UpdatePreviewButtonState(enabled);
     }
 
@@ -825,6 +865,7 @@ public partial class MainWindow : Window
         bool createRestorePoint = preview.CreateRestorePoint;
 
         _busy = true;
+        _modifying = true;
         SetControlsEnabled(false);
         ActionProgressBar.Visibility = Visibility.Visible;
         StatusText.Text = createRestorePoint
@@ -833,14 +874,40 @@ public partial class MainWindow : Window
 
         try
         {
-            ActionExecutionResult result = await Task.Run(() => section switch
+            Func<bool, ActionExecutionResult> apply = withRestorePoint => section switch
             {
-                ActiveSection.Clean => _cleanupService.Apply(selected, createRestorePoint),
-                ActiveSection.Optimize => _optimizationService.Apply(selected, createRestorePoint),
-                ActiveSection.Debloat => _debloatService.Apply(selected, createRestorePoint),
-                ActiveSection.Duplicates => _duplicateFinderService.Apply(selected, createRestorePoint),
+                ActiveSection.Clean => _cleanupService.Apply(selected, withRestorePoint),
+                ActiveSection.Optimize => _optimizationService.Apply(selected, withRestorePoint),
+                ActiveSection.Debloat => _debloatService.Apply(selected, withRestorePoint),
+                ActiveSection.Duplicates => _duplicateFinderService.Apply(selected, withRestorePoint),
                 _ => new ActionExecutionResult(null, null, []),
-            });
+            };
+
+            ActionExecutionResult result = await Task.Run(() => apply(createRestorePoint));
+
+            if (result.StoppedForMissingRestorePoint)
+            {
+                // Il punto di ripristino era richiesto e non c'è: non è stato applicato niente, decide l'utente.
+                RestorePointResult? missing = result.RestorePoint;
+                string reason = missing?.Message ?? "motivo sconosciuto.";
+                MessageBoxResult answer = MessageBox.Show(
+                    this,
+                    $"Il punto di ripristino non è stato creato:\n{reason}\n\nNon ho ancora applicato niente.\n\nContinuare senza punto di ripristino?",
+                    "Punto di ripristino \u00B7 W11-cleaner-tool",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning,
+                    MessageBoxResult.No);
+
+                if (answer != MessageBoxResult.Yes)
+                {
+                    StatusText.Text = "Nessuna modifica applicata: il punto di ripristino non è stato creato.";
+                    return;
+                }
+
+                StatusText.Text = "Applicazione delle modifiche senza punto di ripristino in corso\u2026";
+                result = await Task.Run(() => apply(false));
+                result = result with { RestorePoint = missing };
+            }
 
             _currentPlannedItems = new List<PlannedChangeItem>();
             PlannedChangesList.ItemsSource = null;
@@ -853,7 +920,15 @@ public partial class MainWindow : Window
             _actionCache[section] = new CachedActionState(_currentPlannedItems, postSummary, result);
             ShowExecutionOutcomes(result);
 
-            await LoadHistoryAndQuarantineAsync();
+            try
+            {
+                await LoadHistoryAndQuarantineAsync();
+            }
+            catch (Exception ex) when (ex is ActionLogUnavailableException or IOException or UnauthorizedAccessException)
+            {
+                // Le modifiche sono applicate; si segnala solo che l'elenco dello storico non si è aggiornato.
+                ActionSummaryText.Text = postSummary + " Lo storico non si è potuto rileggere: " + ex.Message;
+            }
 
             StatusText.Text = result.FailedCount == 0
                 ? $"Operazione completata ({result.SucceededCount} applicate). Storico aggiornato."
@@ -873,6 +948,7 @@ public partial class MainWindow : Window
         {
             ActionProgressBar.Visibility = Visibility.Collapsed;
             _busy = false;
+            _modifying = false;
             SetControlsEnabled(true);
             UpdateSelectionButtonsVisibility();
             UpdateActionSelectionSummary();
@@ -883,8 +959,10 @@ public partial class MainWindow : Window
     {
         if (section == ActiveSection.Duplicates)
         {
+            // Spostare in quarantena non libera spazio: si libera solo quando la quarantena si svuota.
             return $"Spostati in quarantena {result.SucceededCount} file ({Heuristics.FormatBytes(result.TotalBytesFreed)}). " +
-                   "Puoi ripristinarli in qualsiasi momento da «Storico e Quarantena».";
+                   "Lo spazio si libera quando svuoti la quarantena (proposto dopo 30 giorni); i file presi da un altro disco " +
+                   "intanto occupano spazio sul disco della quarantena. Puoi ripristinarli da «Storico e Quarantena».";
         }
 
         if (section == ActiveSection.Clean)
@@ -1067,6 +1145,7 @@ public partial class MainWindow : Window
         }
 
         _busy = true;
+        _modifying = true;
         SetControlsEnabled(false);
         StatusText.Text = "Annullamento della modifica in corso\u2026";
 
@@ -1086,6 +1165,7 @@ public partial class MainWindow : Window
         finally
         {
             _busy = false;
+            _modifying = false;
             SetControlsEnabled(true);
         }
     }
@@ -1098,6 +1178,7 @@ public partial class MainWindow : Window
         }
 
         _busy = true;
+        _modifying = true;
         SetControlsEnabled(false);
         StatusText.Text = "Annullamento dell'intera sessione in corso\u2026";
 
@@ -1120,6 +1201,7 @@ public partial class MainWindow : Window
         finally
         {
             _busy = false;
+            _modifying = false;
             SetControlsEnabled(true);
         }
     }
@@ -1174,6 +1256,7 @@ public partial class MainWindow : Window
             ?.QuarantinedPath;
 
         _busy = true;
+        _modifying = true;
         SetControlsEnabled(false);
         StatusText.Text = "Ripristino del file dalla quarantena in corso\u2026";
 
@@ -1210,6 +1293,7 @@ public partial class MainWindow : Window
         finally
         {
             _busy = false;
+            _modifying = false;
             SetControlsEnabled(true);
         }
     }
@@ -1235,13 +1319,23 @@ public partial class MainWindow : Window
         }
 
         var ids = _cachedExpired.Select(i => i.Id).ToList();
+        var expiredPaths = _cachedExpired.Select(i => i.QuarantinedPath).ToList();
         _busy = true;
+        _modifying = true;
         SetControlsEnabled(false);
         StatusText.Text = "Eliminazione degli elementi scaduti in corso\u2026";
 
         try
         {
-            int purged = await Task.Run(() => _quarantineService.PurgeItems(ids));
+            int purged = await Task.Run(() =>
+            {
+                int count = _quarantineService.PurgeItems(ids);
+
+                // Le voci di storico dei file eliminati davvero non sono più annullabili.
+                var gone = expiredPaths.Where(p => !string.IsNullOrWhiteSpace(p) && !File.Exists(p)).ToList();
+                _actionLog.MarkQuarantinePurged(gone);
+                return count;
+            });
             await LoadHistoryAndQuarantineAsync();
             StatusText.Text = purged == 1
                 ? "1 file oltre 30 giorni eliminato definitivamente dalla quarantena."
@@ -1254,6 +1348,7 @@ public partial class MainWindow : Window
         finally
         {
             _busy = false;
+            _modifying = false;
             SetControlsEnabled(true);
         }
     }
@@ -1264,6 +1359,12 @@ public partial class MainWindow : Window
 
     private void ElevateButton_Click(object sender, RoutedEventArgs e)
     {
+        if (_busy)
+        {
+            StatusText.Text = "Aspetta che finisca l'operazione in corso prima di riavviare come amministratore.";
+            return;
+        }
+
         string? exe = Environment.ProcessPath;
         if (exe is null)
         {
@@ -1272,12 +1373,70 @@ public partial class MainWindow : Window
 
         try
         {
-            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true, Verb = "runas" });
+            // L'istanza elevata riceve il SID di chi l'ha chiesta: se gira con un altro account lo dice subito.
+            var startInfo = new ProcessStartInfo(exe) { UseShellExecute = true, Verb = "runas" };
+            string? sid = GetCurrentUserSid();
+            if (!string.IsNullOrWhiteSpace(sid))
+            {
+                startInfo.Arguments = $"{App.OriginalUserArgument} {sid}";
+            }
+
+            Process.Start(startInfo);
             Application.Current.Shutdown();
         }
         catch (Win32Exception)
         {
             StatusText.Text = "Riavvio come amministratore annullato.";
+        }
+    }
+
+    private static string? GetCurrentUserSid()
+    {
+        try
+        {
+            using var identity = WindowsIdentity.GetCurrent();
+            return identity.User?.Value;
+        }
+        catch (System.Security.SecurityException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Se l'istanza elevata gira con un account diverso da quello che ha chiesto il riavvio,
+    /// restituisce l'avviso da mostrare (storico, quarantena, TEMP e app sono quelli dell'altro account).
+    /// </summary>
+    private static string? BuildAccountWarning()
+    {
+        string? originalSid = App.OriginalUserSid;
+        if (string.IsNullOrWhiteSpace(originalSid))
+        {
+            return null;
+        }
+
+        string? currentSid = GetCurrentUserSid();
+        if (currentSid is not null && string.Equals(currentSid, originalSid, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        string originalName = TranslateSid(originalSid);
+        string currentName = Environment.UserName;
+        return $"Attenzione: ora l'app gira come amministratore con l'account «{currentName}», non con quello di prima ({originalName}). " +
+               $"Storico, quarantena, cartella TEMP, cache dei browser, programmi all'avvio e app preinstallate sono quelli di «{currentName}»: " +
+               "le modifiche fatte prima non si vedono qui e quelle di adesso non toccano l'altro account.";
+    }
+
+    private static string TranslateSid(string sid)
+    {
+        try
+        {
+            return new SecurityIdentifier(sid).Translate(typeof(NTAccount)).Value;
+        }
+        catch (SystemException)
+        {
+            return sid;
         }
     }
 }

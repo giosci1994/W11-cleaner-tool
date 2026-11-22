@@ -20,10 +20,11 @@ SHA256-verified releases.**
   <img src="docs/social-preview.png" width="800" alt="W11-cleaner-tool — checks your PC, changes nothing until you say so" />
 </p>
 
-> **Status: version 0.2.0 (pre-release).** Includes read-only diagnostics plus safe cleaning,
+> **Status: version 0.2.1 (pre-release).** Includes read-only diagnostics plus safe cleaning,
 > optimization, conservative debloat, duplicate quarantine, change history with undo, and a
 > temporary no-sleep toggle. Every system change goes through a **preview dialog**, an optional
-> **restore point**, and a **JSON history log**. Real-PC verification in progress.
+> **restore point** (needs administrator rights), and a **JSON history log**. Cleaning and emptying
+> the Recycle Bin cannot be undone. Real-PC verification in progress.
 
 > **Note:** the app's interface is in Italian for now. The labels quoted below are the ones you
 > will see on screen, with an English translation in brackets.
@@ -55,9 +56,9 @@ Two modes, one switch at the top: **«Modalità Esperto»** (Expert mode). The c
 | **Gaming** | Game Mode, hardware-accelerated GPU scheduling, power plan, monitor refresh rate vs. the maximum, memory integrity (reported only), Game Bar background recording, graphics driver, free space on the system drive, pending reboot |
 | **RAM e driver** (RAM and drivers) | RAM speed vs. the rated speed (XMP / EXPO / DOCP, indicative), devices with errors, graphics, network and audio drivers with their date (Microsoft `2006` built-in drivers are recognized as normal Windows drivers) |
 | **Problemi e crash** (Problems and crashes) | Blue screens, unexpected shutdowns, hardware errors (WHEA), apps that crash or hang, minidumps of the last 30 days, plus a **report to copy or save for an AI**, without user name, PC name or personal paths |
-| **Pulisci** (Clean) | Estimates and cleans user `%TEMP%`, `Windows\Temp`, Windows Update download cache, Edge/Chrome/Firefox caches (cache only — passwords, cookies and history stay intact), and the Recycle Bin |
+| **Pulisci** (Clean) | Estimates and cleans user `%TEMP%`, `Windows\Temp`, Windows Update download cache, Edge/Chrome/Firefox caches (cache only — passwords, cookies and history stay intact), and the Recycle Bin. Files touched in the last 24 hours stay, `%TEMP%` pointing to a drive root, the user profile, personal folders, Windows or Program Files is refused, and the Windows Update cache is skipped while Windows Update is running. **Deleted files cannot be restored** |
 | **Ottimizza** (Optimize) | Lists startup programs (`StartupApproved`) and Windows power plans (`powercfg`) with reversible toggling and switching |
-| **Debloat** | Conservatively detects safe preinstalled UWP bloatware for removal while strictly protecting Microsoft Store, Xbox/GamingServices, Windows Security, Edge, Calculator, Photos, Notepad, Terminal and system runtimes |
+| **Debloat** | Conservatively detects safe preinstalled UWP bloatware for removal while strictly protecting Microsoft Store, Xbox/GamingServices, Windows Security, Edge, Calculator, Photos, Notepad, Terminal and system runtimes. Undo is best effort: it re-registers the app from the package left on disk, otherwise it opens Microsoft Store to reinstall it |
 | **Duplicati** (Duplicates) | Scans chosen folders (size → 4 KB SHA256 → full SHA256), keeps the oldest copy and moves exact duplicates to **Quarantine** (never deletes directly) |
 | **Storico e Quarantena** (History & Quarantine) | Undo individual changes or full sessions, reopen Microsoft Store links when an Appx needs reinstalling, restore quarantined files, or purge quarantined items older than 30 days |
 
@@ -67,7 +68,7 @@ A **«Niente sospensione (download)»** (No sleep for downloads) toggle in the t
 
 - **Windows 11** Home or Pro, **x64** (Intel / AMD) or **ARM64** (Snapdragon).
 - Nothing to install: the exe is self-contained and already includes .NET.
-- No administrator rights required to start. **«Riavvia come amministratore»** (Restart as administrator) in the top bar enables reading crash minidumps, creating Windows restore points, cleaning `Windows\Temp` / Windows Update cache, and toggling machine-wide (`HKLM`) startup entries.
+- No administrator rights required to start. **«Riavvia come amministratore»** (Restart as administrator) in the top bar, in both Base and Expert mode, enables reading crash minidumps, creating Windows restore points, cleaning `Windows\Temp` / Windows Update cache, and toggling machine-wide (`HKLM`) startup entries. If Windows asks for a different account's credentials, the app warns you that history, quarantine, `%TEMP%` and apps then belong to that other account.
 
 ## 📦 Download and verify
 
@@ -94,18 +95,19 @@ A **«Niente sospensione (download)»** (No sleep for downloads) toggle in the t
 2. For diagnostics, click **«Controlla tutto»** (Check everything) or a single card (**Gaming**, **RAM e driver**, **Problemi e crash**). In **Problemi e crash**, **«Copia il rapporto per l'IA»** or **«Salva il rapporto…»** gives you an anonymized summary for an AI assistant.
 3. For **Pulisci**, **Ottimizza**, **Debloat**, or **Duplicati**, click the analyze button first, review and check/uncheck items, then click **«Anteprima e applica»** (or **«Sposta in quarantena»** for duplicates).
 4. Review the **preview modal** (before → after, estimated space, restore point checkbox) and confirm.
-5. Open **«Storico e Quarantena»** at any time to undo reversible changes or restore quarantined files.
+5. Open **«Storico e Quarantena»** at any time to undo reversible changes or restore quarantined files. Each change is written to the history as soon as it is applied.
 
 App data lives in `%LOCALAPPDATA%\W11-cleaner-tool\`:
 - `settings.json` — Expert mode preference
-- `history.json` — applied sessions and undo metadata
+- `history.json` — applied sessions and undo metadata (`history.json.bak` keeps the previous version)
 - `quarantine\` — moved duplicate files with `manifest.json` and SHA256 hashes
 
 ## 🔐 Privacy and safety
 
 - **Preview before changes:** nothing is modified during scans; every change shows *before → after* and requires explicit confirmation.
-- **Restore points:** enabled by default in the preview modal for system changes when running as administrator; never forces System Protection on if disabled.
-- **Undo & Quarantine:** startup entries, power plans, removed apps (re-registered locally or via Microsoft Store link), and duplicate files (moved to quarantine, with manual purge suggested only after 30 days) can be reverted from **«Storico e Quarantena»**.
+- **Restore points:** need administrator rights; enabled by default in the preview modal for system changes when running as administrator; never forces System Protection on if disabled. Windows creates at most one restore point every 24 hours: if no new point is created, nothing is applied until you choose to continue without one.
+- **Undo & Quarantine:** startup entries, power plans and duplicate files (moved to quarantine, with manual purge suggested only after 30 days; restore checks the SHA256 first) can be reverted from **«Storico e Quarantena»**. Removed apps are re-registered from the local package when it is still there, otherwise you get a Microsoft Store link. **Cleaning (temporary files, caches) and emptying the Recycle Bin cannot be undone**, and files purged from quarantine are gone for good.
+- **Quarantine space:** moving a file to quarantine does not free space until the quarantine is purged; files from another drive are copied (and verified) to the quarantine drive, which needs enough free space.
 - **Anonymized crash report:** strips user name, PC name, domain and profile paths.
 - **No telemetry, no network calls, no installation of apps (`winget`).**
 
@@ -115,7 +117,7 @@ App data lives in `%LOCALAPPDATA%\W11-cleaner-tool\`:
 2. ✅ No sleep while downloads are running (only while the app is open).
 3. ✅ Cleaning: temporary files, browser caches, Windows Update cache, recycle bin — an estimate first.
 4. ✅ Optimization: reversible startup programs and power plan switching.
-5. ✅ Debloat: conservative UWP bloatware removal with protected system packages and undo.
+5. ✅ Debloat: conservative UWP bloatware removal with protected system packages and best-effort undo.
 6. ✅ Duplicate files moved to quarantine (never deleted straight away), with restore and 30-day purge prompt.
 7. Real-PC verification across Windows 11 Home/Pro and future newsletter cleanup module (separate).
 

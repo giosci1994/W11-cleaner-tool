@@ -1,6 +1,6 @@
 # W11-cleaner-tool · scheletro
 
-Ultimo aggiornamento: 21/11/2026 · repository pubblico, Pages attivo, completata la v0.2.0 (fix driver Microsoft 2006, niente sospensione, sicurezze/storico/quarantena, pulizia, ottimizzazione, debloat, duplicati e UI WPF Base/Esperto).
+Ultimo aggiornamento: 22/11/2026 · repository pubblico, Pages attivo, completata la v0.2.1 (barra laterale nuova e correzioni della revisione; prima la v0.2.0: fix driver Microsoft 2006, niente sospensione, sicurezze/storico/quarantena, pulizia, ottimizzazione, debloat, duplicati e UI WPF Base/Esperto).
 
 <!-- Questo file sta nel repository, che è pubblico: niente nomi propri, email, percorsi di macchine, token, chiavi o password. Le note private di lavoro stanno fuori dal repository. -->
 
@@ -23,11 +23,12 @@ Ultimo aggiornamento: 21/11/2026 · repository pubblico, Pages attivo, completat
   - `Checks/GamingChecks.cs` · `Checks/HardwareChecks.cs` · `Checks/CrashReport.cs`: **solo lettura** (registro, WMI, registri eventi, API di Windows).
   - `Heuristics.cs`: le regole pure (RAM, età dei driver con riconoscimento `IsWindowsSystemDriver` per driver Microsoft 2006, spazio, frequenza, `FormatBytes`): **si provano nei test**.
   - `Anonymizer.cs`: toglie nome utente, nome del PC, dominio e profili dal rapporto dei crash.
+  - `ProcessRunner.cs`: avvio di `powershell`/`powercfg` con letture asincrone, tempo massimo e chiusura dell'albero dei processi; codifica OEM della console.
   - `KeepAwakeService.cs`: `SetThreadExecutionState` temporaneo per impedire la sospensione finché l'app è aperta.
   - `Safety/`: `PlannedChange.cs` (modello «prima → dopo»), `ActionLog.cs` (`%LOCALAPPDATA%\W11-cleaner-tool\history.json`), `RestorePointService.cs` (WMI `SystemRestore.CreateRestorePoint`, non attiva mai Protezione sistema da sola), `QuarantineService.cs` (`%LOCALAPPDATA%\W11-cleaner-tool\quarantine\<sessione>\manifest.json` con SHA256, ripristino e pulizia oltre 30 giorni).
-  - `Actions/`: `ActionExecutionResult.cs`, `CleanupService.cs`, `OptimizationService.cs`, `DebloatService.cs` (elenco curato + protezioni pacchetti critici, niente telemetria né winget), `DuplicateFinderService.cs` (dimensione → SHA256 4 KB → SHA256 completo, solo quarantena), `UndoCoordinator.cs`.
-- `tests/W11CleanerTool.Tests/`: test delle regole, dell'anonimizzazione, dei servizi di sicurezza e azione (`ActionLogTests`, `CleanupServiceTests`, `DebloatServiceTests`, `DuplicateFinderServiceTests`, `OptimizationServiceTests`, `QuarantineServiceTests`), più `SmokeTests` sul runner Windows.
-- `CHANGELOG.md`: registro delle versioni (`0.1.0`, `0.2.0`).
+  - `Actions/`: `ActionExecutionResult.cs`, `CleanupService.cs`, `OptimizationService.cs`, `DebloatService.cs` (elenco curato + protezioni pacchetti critici, niente telemetria né winget), `DuplicateFinderService.cs` (dimensione → SHA256 4 KB → SHA256 completo, solo quarantena), `UndoCoordinator.cs`, `SessionRecorder.cs` (scrive nello storico ogni voce appena applicata).
+- `tests/W11CleanerTool.Tests/`: test delle regole, dell'anonimizzazione, dei servizi di sicurezza e azione (`ActionLogTests`, `CleanupServiceTests`, `DebloatServiceTests`, `DuplicateFinderServiceTests`, `OptimizationServiceTests`, `QuarantineServiceTests`, `RestorePointServiceTests`, `UndoCoordinatorTests`), più `SmokeTests` sul runner Windows.
+- `CHANGELOG.md`: registro delle versioni (`0.1.0`, `0.2.0`, `0.2.1`).
 - `scripts/publish.ps1`: exe x64 e ARM64 self-contained in file singolo, `SHA256SUMS.txt`. `scripts/VERIFY.ps1`: il controllo per chi scarica.
 - `.github/workflows/build.yml` (push su `main`, PR, a mano) · `release.yml` (tag `v*`, release segnata «pre-release» finché la versione è 0.x).
 - `docs/decisioni.md` (le scelte) · `docs/piano.md` (il piano approvato) · `docs/ricerca-progetti-simili.md`.
@@ -59,6 +60,7 @@ In `docs/decisioni.md`.
 - **Falsi avvisi sui driver**: corretto in v0.2.0 (`Heuristics.IsWindowsSystemDriver` riconosce i driver Microsoft con data convenzionale 2006 come `Ok` / «driver di Windows»); da verificare sul PC reale.
 - Sul PC vero: la regola della RAM (XMP), la chiave `HistoricalCaptureEnabled` della Game Bar, le frequenze dei monitor, la dimensione dell'exe, e tutte le funzioni operative v0.2.0 (pulizia, ottimizzazione, debloat, duplicati, punto di ripristino, annulla e quarantena).
 - La landing e la social preview mostrano un'**illustrazione** dell'app: le schermate vere si aggiungono dopo la prova sul PC.
+- **Correzioni della revisione v0.2.0** (in `CHANGELOG.md`, v0.2.1), scritte senza compilare: prima la build e i test su Actions, poi sul PC: il punto di ripristino quando ne esiste già uno di meno di 24 ore (deve chiedere «Continuare senza?»), la cache di Windows Update con il servizio attivo, i duplicati da un altro disco (copia verificata, spazio sul disco della quarantena), il riavvio come amministratore con un altro account (avviso sotto il titolo), i nomi accentati dei piani energetici, la chiusura della finestra durante una modifica (bloccata) e durante un'analisi (annulla e chiude), la barra laterale nuova (voce attiva, barra di scorrimento che non copre le voci).
 
 ## Il registro dei lavori
 | Data | Cosa si è fatto | Cosa si è scoperto |
@@ -67,3 +69,4 @@ In `docs/decisioni.md`.
 | 19/11/2026 | README solo in inglese; landing page EN/IT e social preview nello stile degli altri repository | Pages non attivabile finché il repository è privato (piano gratuito) |
 | 21/11/2026 | Controllo dei dati su tutta la storia, repository **pubblico**, Pages attivo, social preview caricata | con il repository pubblico i badge del README funzionano |
 | 21/11/2026 | v0.2.0: fix driver Microsoft 2006, `KeepAwakeService`, `Safety/` (`ActionLog`, `RestorePointService`, `QuarantineService`), `Actions/` (pulizia, ottimizzazione, debloat, duplicati, `UndoCoordinator`), modale `PreviewDialog` e UI WPF completa Base/Esperto con Storico e Quarantena | tutte le modifiche passano da `PlannedChange` + anteprima + storico JSON; gli elementi oltre 30 giorni in quarantena non si eliminano da soli senza conferma |
+| 22/11/2026 | Correzioni della revisione v0.2.0 (15 punti): pulizia che rifiuta cartelle pericolose e lascia i file recenti, punto di ripristino verificato prima/dopo e domanda se manca, storico che non si sovrascrive mai (`history.json.bak`) e si scrive voce per voce, duplicati e quarantena verificati con SHA256, quarantena da un altro disco con copia verificata e controllo dello spazio, processi esterni con tempo massimo, `powercfg` con codifica OEM, SID passato al riavvio come amministratore, testi onesti su README e landing, test nuovi | Windows non crea un secondo punto di ripristino entro 24 ore ma risponde 0; scelta per la quarantena: resta in `%LOCALAPPDATA%` (niente cartelle nascoste sugli altri dischi, che sparirebbero con i dischi rimovibili) |

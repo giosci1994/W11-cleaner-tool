@@ -5,17 +5,66 @@
         Width="1100" Height="760" MinWidth="840" MinHeight="560"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
-    <Style x:Key="CardButton" TargetType="Button">
+    <!-- Voce della barra laterale: piatta come nelle Impostazioni di Windows 11.
+         La voce attiva ha Tag="active" (lo imposta HighlightActiveNavButton):
+         sfondo leggero e trattino colorato a sinistra. -->
+    <Style x:Key="NavItem" TargetType="Button">
       <Setter Property="HorizontalAlignment" Value="Stretch" />
       <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-      <Setter Property="Padding" Value="12,10" />
-      <Setter Property="Margin" Value="0,0,0,8" />
+      <Setter Property="Padding" Value="12,7" />
+      <Setter Property="Margin" Value="0,0,0,2" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="ToolTipService.InitialShowDelay" Value="700" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Border x:Name="Bg" CornerRadius="6" Background="{TemplateBinding Background}"
+                      Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                  VerticalAlignment="Center" />
+              </Border>
+              <Border x:Name="Pill" Width="3" Height="18" CornerRadius="1.5" HorizontalAlignment="Left"
+                      VerticalAlignment="Center" Visibility="Collapsed"
+                      Background="{DynamicResource AccentFillColorDefaultBrush}" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="Tag" Value="active">
+                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                <Setter TargetName="Pill" Property="Visibility" Value="Visible" />
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Bg" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="NavGlyph" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="NavCaption" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Opacity" Value="0.7" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
     <Style x:Key="NavSectionHeader" TargetType="TextBlock">
       <Setter Property="FontSize" Value="11" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Opacity" Value="0.6" />
-      <Setter Property="Margin" Value="2,10,0,6" />
+      <Setter Property="Margin" Value="12,14,0,6" />
     </Style>
   </Window.Resources>
 
@@ -60,144 +109,157 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <!-- Barra laterale di navigazione -->
-      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-        <StackPanel>
-          <TextBlock Text="CONTROLLI (SOLA LETTURA)" Style="{StaticResource NavSectionHeader}" Margin="2,0,0,6" />
-
-          <Button x:Name="AllButton" Style="{StaticResource CardButton}" Click="AllButton_Click">
+      <!-- Barra laterale di navigazione (stile Impostazioni di Windows 11).
+           Il margine a destra lascia posto alla barra di scorrimento del tema Fluent,
+           che altrimenti si sovrappone alle voci. -->
+      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,14,0">
+          <TextBlock Text="CONTROLLI (SOLA LETTURA)" Style="{StaticResource NavSectionHeader}" Margin="12,0,0,6" />
+          <Button x:Name="AllButton" Style="{StaticResource NavItem}" Click="AllButton_Click"
+                  ToolTip="Panoramica completa: gaming, RAM, driver e crash.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE9D9;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Controlla tutto" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Panoramica completa: gaming, RAM, driver e crash." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE9D9;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Controlla tutto" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Gaming, RAM, driver e crash" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
-          <Button x:Name="GamingButton" Style="{StaticResource CardButton}" Click="GamingButton_Click">
+          <Button x:Name="GamingButton" Style="{StaticResource NavItem}" Click="GamingButton_Click"
+                  ToolTip="Modalità gioco, scheda video, monitor, piano energetico.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE7FC;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Gaming" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Modalità gioco, scheda video, monitor, piano energetico." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE7FC;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Gaming" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Gioco, scheda video, monitor" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
-          <Button x:Name="HardwareButton" Style="{StaticResource CardButton}" Click="HardwareButton_Click">
+          <Button x:Name="HardwareButton" Style="{StaticResource NavItem}" Click="HardwareButton_Click"
+                  ToolTip="Velocità RAM (XMP), driver e dispositivi con errori.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE7F4;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="RAM e driver" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Velocità RAM (XMP), driver e dispositivi con errori." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE7F4;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="RAM e driver" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="XMP, driver, dispositivi" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
-          <Button x:Name="CrashButton" Style="{StaticResource CardButton}" Click="CrashButton_Click">
+          <Button x:Name="CrashButton" Style="{StaticResource NavItem}" Click="CrashButton_Click"
+                  ToolTip="Schermate blu e app bloccate, con rapporto per l'IA.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE7BA;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Problemi e crash" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Schermate blu e app bloccate, con rapporto per l'IA." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE7BA;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Problemi e crash" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Schermate blu, app bloccate" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
           <TextBlock Text="PULIZIA E OTTIMIZZAZIONE" Style="{StaticResource NavSectionHeader}" />
-
-          <Button x:Name="CleanButton" Style="{StaticResource CardButton}" Click="CleanButton_Click">
+          <Button x:Name="CleanButton" Style="{StaticResource NavItem}" Click="CleanButton_Click"
+                  ToolTip="Temporanei, cache browser, Windows Update e Cestino.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE74D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Pulisci" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Temporanei, cache browser, Windows Update e Cestino." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE74D;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Pulisci" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Temporanei, cache, Cestino" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
-          <Button x:Name="OptimizeButton" Style="{StaticResource CardButton}" Click="OptimizeButton_Click">
+          <Button x:Name="OptimizeButton" Style="{StaticResource NavItem}" Click="OptimizeButton_Click"
+                  ToolTip="Programmi all'avvio e piano energetico, reversibili.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE945;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Ottimizza" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Programmi all'avvio e piano energetico, reversibili." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE945;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Ottimizza" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Avvio e piano energetico" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
-          <Button x:Name="DebloatButton" Style="{StaticResource CardButton}" Click="DebloatButton_Click">
+          <Button x:Name="DebloatButton" Style="{StaticResource NavItem}" Click="DebloatButton_Click"
+                  ToolTip="Rimuovi in sicurezza le app preinstallate superflue.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE71D;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Debloat" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Rimuovi in sicurezza le app preinstallate superflue." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE71D;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Debloat" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="App preinstallate superflue" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
-          <Button x:Name="DuplicatesButton" Style="{StaticResource CardButton}" Click="DuplicatesButton_Click">
+          <Button x:Name="DuplicatesButton" Style="{StaticResource NavItem}" Click="DuplicatesButton_Click"
+                  ToolTip="Trova copie identiche e spostale in quarantena.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE8C8;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Duplicati" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Trova copie identiche e spostale in quarantena." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE8C8;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Duplicati" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Copie identiche in quarantena" Style="{StaticResource NavCaption}" />
               </StackPanel>
             </Grid>
           </Button>
 
           <TextBlock Text="SICUREZZE" Style="{StaticResource NavSectionHeader}" />
-
-          <Button x:Name="HistoryButton" Style="{StaticResource CardButton}" Click="HistoryButton_Click">
+          <Button x:Name="HistoryButton" Style="{StaticResource NavItem}" Click="HistoryButton_Click"
+                  ToolTip="Annulla modifiche passate e ripristina file messi da parte.">
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
-              <TextBlock Grid.Column="0" Text="&#xE81C;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="16" VerticalAlignment="Top" Margin="0,2,0,0" />
-              <StackPanel Grid.Column="1">
-                <TextBlock Text="Storico e Quarantena" FontSize="15" FontWeight="SemiBold" />
-                <TextBlock Text="Annulla modifiche passate e ripristina file messi da parte." TextWrapping="Wrap" Opacity="0.8" FontSize="12" />
+              <TextBlock Grid.Column="0" Text="&#xE81C;" Style="{StaticResource NavGlyph}" />
+              <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="Storico e Quarantena" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="Annulla e ripristina" Style="{StaticResource NavCaption}" />
                 <TextBlock x:Name="HistoryExpiredHint" Visibility="Collapsed" Foreground="#D98200" FontSize="11"
-                           FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap" />
+                           FontWeight="SemiBold" Margin="0,2,0,0" TextWrapping="Wrap" />
               </StackPanel>
             </Grid>
           </Button>
+
         </StackPanel>
       </ScrollViewer>
+
+      <!-- Divisore tra barra laterale e contenuto -->
+      <Border Grid.Column="1" Width="1" HorizontalAlignment="Center" Margin="0,4"
+              Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
 
       <!-- Area principale a destra -->
       <Grid Grid.Column="2">

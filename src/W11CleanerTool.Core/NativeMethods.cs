@@ -97,6 +97,9 @@ internal static class NativeMethods
     [DllImport("kernel32.dll")]
     internal static extern IntPtr LocalFree(IntPtr hMem);
 
+    [DllImport("kernel32.dll")]
+    internal static extern uint GetOEMCP();
+
     [DllImport("kernel32.dll", SetLastError = true)]
     internal static extern ExecutionState SetThreadExecutionState(ExecutionState esFlags);
 
