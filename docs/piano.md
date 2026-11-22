@@ -54,9 +54,9 @@ Proposto il 18/11/2026 dall'ingegnere. Ogni punto si approva con «fallo tu» o 
 4. All'apertura, se SmartScreen avvisa: «Ulteriori informazioni» → «Esegui comunque».
 5. La prima build non cambia niente sul PC. Dalle funzioni che modificano in poi: prova prima in **Windows Sandbox** (solo Windows 11 Pro) o almeno con un punto di ripristino.
 
-## 7 · Licenza MIT
-- File `LICENSE` con `Copyright (c) 2026 <nome>`: il nome è da scegliere (il nome vero, il nome utente di GitHub, oppure «W11-cleaner-tool contributors»). Resta visibile quando il repository diventa pubblico.
-- Nei repository pubblici del proprietario: l'unico MIT ha il nome completo nel copyright; i commit sono firmati con il nome di battesimo e l'email noreply. I file comuni (SECURITY, CONTRIBUTING, CODE_OF_CONDUCT) arrivano già dal repository `.github` dell'account: qui non si ripetono.
+## 7 · Licenza GPL-3.0
+- Dal 22/11/2026 la licenza è passata da MIT a **GNU GPL-3.0** (file `LICENSE` con testo ufficiale GPL-3.0).
+- I file comuni (SECURITY, CONTRIBUTING, CODE_OF_CONDUCT) arrivano già dal repository `.github` dell'account: qui non si ripetono.
 
 ## 8 · Prima del primo commit
 - In `docs/decisioni.md` due righe citano un nome proprio («scelta di …»): si sostituisce con «scelta del proprietario», così la storia pubblica non lo contiene.
