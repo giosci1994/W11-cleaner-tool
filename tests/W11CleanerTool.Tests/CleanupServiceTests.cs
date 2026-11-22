@@ -401,9 +401,41 @@ public sealed class CleanupServiceTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
+        // Pulizia della cartella di prova: junction e collegamenti si tolgono come link
+        // (senza entrarci), e un errore qui non deve far fallire il test.
+        try
         {
-            Directory.Delete(_tempDir, recursive: true);
+            if (Directory.Exists(_tempDir))
+            {
+                DeleteTreeWithoutFollowingLinks(_tempDir);
+            }
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Cartella temporanea del runner: si lascia lì.
+        }
+    }
+
+    private static void DeleteTreeWithoutFollowingLinks(string dir)
+    {
+        foreach (string sub in Directory.GetDirectories(dir))
+        {
+            if (new DirectoryInfo(sub).Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                Directory.Delete(sub, recursive: false);
+            }
+            else
+            {
+                DeleteTreeWithoutFollowingLinks(sub);
+            }
+        }
+
+        foreach (string file in Directory.GetFiles(dir))
+        {
+            File.SetAttributes(file, FileAttributes.Normal);
+            File.Delete(file);
+        }
+
+        Directory.Delete(dir, recursive: false);
     }
 }
