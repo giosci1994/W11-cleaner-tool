@@ -202,6 +202,9 @@ public sealed class DuplicateFinderService
 
         var recorder = new SessionRecorder(_actionLog, restorePoint?.Status == RestorePointStatus.Created);
 
+        // Lo SHA256 di un originale con più copie si calcola una volta sola per questa applicazione.
+        var keeperHashCache = new Dictionary<KeeperFingerprint, string?>();
+
         foreach (var change in selected)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -212,7 +215,7 @@ public sealed class DuplicateFinderService
                 continue;
             }
 
-            string? refusal = CheckKeeperBeforeMove(change, out string expectedHash);
+            string? refusal = CheckKeeperBeforeMove(change, keeperHashCache, out string expectedHash);
             if (refusal is not null)
             {
                 outcomes.Add(new ActionItemOutcome(change.Id, change.Title, Succeeded: false, refusal));
@@ -264,7 +267,10 @@ public sealed class DuplicateFinderService
     /// Prima di spostare una copia: l'originale tenuto deve esistere ed essere ancora identico all'analisi.
     /// Restituisce il motivo del rifiuto, oppure null se si può procedere.
     /// </summary>
-    private static string? CheckKeeperBeforeMove(PlannedChange change, out string expectedHash)
+    private static string? CheckKeeperBeforeMove(
+        PlannedChange change,
+        Dictionary<KeeperFingerprint, string?> keeperHashCache,
+        out string expectedHash)
     {
         expectedHash = "";
         if (!change.Metadata.TryGetValue("OriginalKeptPath", out string? keeper) || string.IsNullOrWhiteSpace(keeper) ||
@@ -288,7 +294,23 @@ public sealed class DuplicateFinderService
             return $"L'originale tenuto «{keeper}» non esiste più: per sicurezza la copia resta dov'è. Rifai la ricerca.";
         }
 
-        string? keeperHash = TryComputeFullSha256(keeper);
+        // La chiave contiene dimensione e data di modifica: se l'originale cambia, l'hash si ricalcola.
+        string? keeperHash;
+        try
+        {
+            var info = new FileInfo(keeper);
+            var fingerprint = new KeeperFingerprint(Path.GetFullPath(keeper).ToUpperInvariant(), info.Length, info.LastWriteTimeUtc);
+            if (!keeperHashCache.TryGetValue(fingerprint, out keeperHash))
+            {
+                keeperHash = TryComputeFullSha256(keeper);
+                keeperHashCache[fingerprint] = keeperHash;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            keeperHash = null;
+        }
+
         if (keeperHash is null)
         {
             return $"Non riesco a leggere l'originale tenuto «{keeper}»: per sicurezza la copia resta dov'è.";
@@ -301,6 +323,9 @@ public sealed class DuplicateFinderService
 
         return null;
     }
+
+    /// <summary>Identità di un originale per riusare il suo SHA256: percorso, dimensione e data di modifica.</summary>
+    private readonly record struct KeeperFingerprint(string FullPath, long Length, DateTime LastWriteTimeUtc);
 
     /// <summary>Cartelle da scansionare senza doppioni: una cartella dentro un'altra già scelta si toglie.</summary>
     internal static List<string> NormalizeScanRoots(IEnumerable<string> folders)
