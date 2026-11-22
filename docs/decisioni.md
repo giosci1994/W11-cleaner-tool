@@ -22,3 +22,4 @@ Le scelte prese per il progetto, con la data. Una decisione presa non si ripropo
 | 18/11/2026 | Il repository sta sull'**account personale** del proprietario, **non sull'organizzazione** | scelta del proprietario |
 | 18/11/2026 | Si sviluppa per **Windows 11 Home e Pro**: niente funzioni che esistono solo su Pro (Criteri di gruppo, Hyper-V); si usano registro e API presenti in entrambe | deve funzionare per chiunque |
 | 18/11/2026 | Build **x64 e ARM64** entrambe a ogni rilascio, anche se il PC di prova è x64 (AMD) | conferma della scelta già presa |
+| 22/11/2026 | Cambio licenza da MIT a **GPL-3.0** (codice da terzi: solo MIT o GPL-3.0 compatibili, con attribuzione; AGPL solo per le idee) | scelta del proprietario |

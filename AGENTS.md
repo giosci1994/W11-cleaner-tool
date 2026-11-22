@@ -6,7 +6,7 @@ Ultimo aggiornamento: 22/11/2026 · repository pubblico, Pages attivo, completat
 
 ## Che cos'è
 - Tool di **pulizia e ottimizzazione per Windows 11**, sul modello di Microsoft PC Manager: schermata semplice con pochi pulsanti (**modalità Base**) e **modalità Esperto**.
-- Un exe solo, **C# (.NET)**, licenza **MIT**, build **x64 e ARM64** con **SHA256** nelle Releases di GitHub.
+- Un exe solo, **C# (.NET)**, licenza **GPL-3.0**, build **x64 e ARM64** con **SHA256** nelle Releases di GitHub.
 - Decide il proprietario del repository. Le scelte prese sono in `docs/decisioni.md` e **non si ripropongono**.
 
 ## Come si entra
@@ -49,7 +49,7 @@ Ultimo aggiornamento: 22/11/2026 · repository pubblico, Pages attivo, completat
 ## Cosa non toccare
 - **Visibilità e impostazioni di sicurezza del repository**: le decide solo il proprietario.
 - Nessun dato personale in file, commit, workflow e release: il repository è pubblico **con tutta la storia**.
-- Codice di altri progetti: solo MIT, con l'attribuzione. GPL e AGPL si leggono solo per le idee.
+- Codice di altri progetti: solo MIT o GPL-3.0 compatibili, con l'attribuzione; AGPL si legge solo per le idee.
 - Niente privacy/telemetria, niente installazione di app con winget (`docs/decisioni.md`).
 
 ## Le decisioni

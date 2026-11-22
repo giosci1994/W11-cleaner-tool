@@ -161,5 +161,5 @@ If this tool is useful to you, you can support its development:
 
 ## 📄 License
 
-[MIT](LICENSE). No code is copied from other projects; ideas and known issues of similar tools are
+[GNU GPL-3.0](LICENSE). No code is copied from other projects; ideas and known issues of similar tools are
 collected in [`docs/ricerca-progetti-simili.md`](docs/ricerca-progetti-simili.md).
