@@ -6,7 +6,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f6f8f7" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#070b0a" />
+  <meta name="color-scheme" content="dark light" />
   <meta name="description"
     content="A simple cleaning and optimization tool for Windows 11: a few big buttons in Base mode, every technical detail in Expert mode. One portable exe for x64 and ARM64."
     data-en="A simple cleaning and optimization tool for Windows 11: a few big buttons in Base mode, every technical detail in Expert mode. One portable exe for x64 and ARM64."
@@ -28,22 +30,31 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="./css/style.css" />
   <script src="./js/main.js" defer></script>
+  <script>
+    /* Entrance animation only when motion is allowed. If Motion does not load within 1.5 s, nothing stays hidden. */
+    (function () {
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      var root = document.documentElement;
+      root.classList.add('motion-ready');
+      window.__revealTimer = setTimeout(function () {
+        window.__revealExpired = true;
+        root.classList.remove('motion-ready');
+      }, 1500);
+    })();
+  </script>
 </head>
 
 <body>
-  <div class="bg">
-    <div class="bg-grid"></div>
-  </div>
-
-  <header class="nav">
+    <header class="nav">
     <div class="container nav-inner">
       <div class="brand">
         <a class="brand-main" href="#top" aria-label="W11-cleaner-tool">
-          <span class="brand-mark" aria-hidden="true">🧹</span>
+          <span class="brand-mark" aria-hidden="true"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" /><path d="m7.5 12.5 3 3 6-7" /></svg></span>
           <span>W11-cleaner-tool</span>
         </a>
       </div>
@@ -65,7 +76,7 @@
 
   <main id="top" class="container">
     <section class="hero">
-      <div class="hero-left">
+      <div class="hero-left reveal">
         <div class="kicker">
           <span class="dot"></span>
           <span data-en="Windows 11 · Open source · GPL-3.0" data-it="Windows 11 · Open source · GPL-3.0">Windows 11 · Open source · GPL-3.0</span>
@@ -90,7 +101,7 @@
         </div>
 
         <div class="status-note">
-          <span aria-hidden="true">🔒</span>
+          <span class="status-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg></span>
           <span data-en="<b>Version 0.2.1 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat, duplicate quarantine and no-sleep — always with preview, history and a restore point (as administrator). Optimization and quarantine can be undone, debloat in part; cleaning and the Recycle Bin cannot."
             data-it="<b>Versione 0.2.1 (pre-release).</b> Controlli in sola lettura più pulizia, ottimizzazione, debloat, quarantena duplicati e niente sospensione — sempre con anteprima, storico e punto di ripristino (da amministratore). Ottimizzazione e quarantena si annullano, il debloat in parte; pulizia e Cestino no.">
             <b>Version 0.2.1 (pre-release).</b> Read-only checks plus cleaning, optimization, debloat,
@@ -109,7 +120,7 @@
         </div>
       </div>
 
-      <div class="hero-right">
+      <div class="hero-right reveal">
         <div class="window app" aria-hidden="true">
           <div class="win-bar">
             <span class="win-title">W11-cleaner-tool</span>
@@ -176,7 +187,7 @@
 
       <div class="cards-grid">
         <article class="card reveal">
-          <span class="card-icon">🎮</span>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" x2="10" y1="11" y2="11" /><line x1="8" x2="8" y1="9" y2="13" /><line x1="15" x2="15.01" y1="12" y2="12" /><line x1="18" x2="18.01" y1="10" y2="10" /><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258A4 4 0 0 0 17.32 5z" /></svg></span>
           <h3>Gaming</h3>
           <p data-en="Is Windows set up for games?" data-it="Windows è pronto per giocare?">Is Windows set up for games?</p>
           <ul>
@@ -188,7 +199,7 @@
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">🧠</span>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="16" height="16" x="4" y="4" rx="2" /><rect width="6" height="6" x="9" y="9" rx="1" /><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2" /></svg></span>
           <h3 data-en="RAM and drivers" data-it="RAM e driver">RAM and drivers</h3>
           <p data-en="Is the hardware running at full speed?" data-it="L'hardware va a piena velocità?">Is the hardware running at full speed?</p>
           <ul>
@@ -199,7 +210,7 @@
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">🩺</span>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></svg></span>
           <h3 data-en="Problems and crashes" data-it="Problemi e crash">Problems and crashes</h3>
           <p data-en="What went wrong in the last 30 days?" data-it="Cosa è andato storto negli ultimi 30 giorni?">What went wrong in the last 30 days?</p>
           <ul>
@@ -210,7 +221,7 @@
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">🧹</span>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg></span>
           <h3 data-en="Clean, optimize, debloat &amp; duplicates" data-it="Pulisci, ottimizza, debloat e duplicati">Clean, optimize, debloat &amp; duplicates</h3>
           <p data-en="Safe maintenance tools with a temporary no-sleep switch." data-it="Strumenti di manutenzione sicuri con interruttore temporaneo niente sospensione.">Safe maintenance tools with a temporary no-sleep switch.</p>
           <ul>
@@ -221,14 +232,14 @@
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">🔒</span>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="m9 12 2 2 4-4" /></svg></span>
           <h3 data-en="Preview, undo &amp; no personal data" data-it="Anteprima, annulla e nessun dato personale">Preview, undo &amp; no personal data</h3>
           <p data-en="Every change starts with a before → after preview, an optional restore point (needs administrator rights), JSON history with per-session undo, and 30-day quarantine. Deleted temporary files and the emptied Recycle Bin cannot be restored. Crash reports drop user/PC names; no telemetry or network calls."
             data-it="Ogni modifica parte con anteprima prima → dopo, punto di ripristino facoltativo (servono i diritti di amministratore), storico JSON con annulla per voce o sessione e quarantena a 30 giorni. I file temporanei eliminati e il Cestino svuotato non si recuperano. I rapporti tolgono nome utente e PC; nessuna telemetria o chiamata di rete.">Every change starts with a before → after preview, an optional restore point (needs administrator rights), JSON history with per-session undo, and 30-day quarantine. Deleted temporary files and the emptied Recycle Bin cannot be restored. Crash reports drop user/PC names; no telemetry or network calls.</p>
         </article>
 
         <article class="card reveal">
-          <span class="card-icon">📦</span>
+          <span class="card-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><path d="m3.3 7 8.7 5 8.7-5" /></svg></span>
           <h3 data-en="One exe, x64 and ARM64" data-it="Un exe, x64 e ARM64">One exe, x64 and ARM64</h3>
           <p data-en="Self-contained: .NET is inside. Starts without admin rights. Built by GitHub Actions, with SHA256 for every file."
             data-it="Autonomo: .NET è già dentro. Parte senza diritti di amministratore. Lo costruisce GitHub Actions, con lo SHA256 di ogni file.">Self-contained: .NET is inside. Starts without admin rights. Built by GitHub Actions, with SHA256 for every file.</p>
@@ -251,9 +262,9 @@
           <p data-en="A few big cards and plain words. Each result gets a colour and one sentence on what to do."
             data-it="Poche schede grandi e parole semplici. Ogni risultato ha un colore e una frase su cosa fare.">A few big cards and plain words. Each result gets a colour and one sentence on what to do.</p>
           <div class="legend">
-            <span data-en="✅ all good" data-it="✅ tutto a posto">✅ all good</span>
-            <span data-en="⚠️ worth a look" data-it="⚠️ da guardare">⚠️ worth a look</span>
-            <span data-en="❌ needs fixing" data-it="❌ da sistemare">❌ needs fixing</span>
+            <span class="legend-item"><i class="legend-dot legend-ok" aria-hidden="true"></i><span data-en="all good" data-it="tutto a posto">all good</span></span>
+            <span class="legend-item"><i class="legend-dot legend-warn" aria-hidden="true"></i><span data-en="worth a look" data-it="da guardare">worth a look</span></span>
+            <span class="legend-item"><i class="legend-dot legend-bad" aria-hidden="true"></i><span data-en="needs fixing" data-it="da sistemare">needs fixing</span></span>
           </div>
         </article>
 
@@ -348,7 +359,7 @@ Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
 
   <footer class="container footer">
     <div class="footer-left">
-      <span aria-hidden="true">🧹</span>
+      <span class="brand-mark small" aria-hidden="true"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="6" /><path d="m7.5 12.5 3 3 6-7" /></svg></span>
       <span>© <span id="year">2026</span> giosci1994 · <span data-en="GPL-3.0 License" data-it="Licenza GPL-3.0">GPL-3.0 License</span></span>
     </div>
     <div class="footer-right">
@@ -357,6 +368,48 @@ Get-FileHash .\W11-cleaner-tool-x64.exe -Algorithm SHA256</code></pre>
       <a href="https://buymeacoffee.com/giosci1994u" target="_blank" rel="noreferrer">☕ Buy Me a Coffee</a>
     </div>
   </footer>
+
+  <!-- Optional motion (motion.dev): entrance of the sections on scroll. The page works the same without it. -->
+  <script src="https://cdn.jsdelivr.net/npm/motion@14.10.1/dist/motion.js"
+    integrity="sha384-lnXs/o2QVHbH7aNA9JGkcMdW38AWVgMHWWrPU/fGgHi+eRj2j0a8va/1nlijpjHX" crossorigin="anonymous"
+    onerror="document.documentElement.classList.remove('motion-ready')"></script>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var M = window.Motion;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      clearTimeout(window.__revealTimer);
+      if (!M || reduce || window.__revealExpired || !M.animate || !M.inView) {
+        root.classList.remove('motion-ready');
+        return;
+      }
+
+      var ease = [0.22, 1, 0.36, 1];
+      var items = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+      // Hand the hidden start state from the class to inline styles, then fade and rise each block as it enters.
+      // Blocks entering together get a small stagger (50 ms, at most six steps).
+      items.forEach(function (el) { el.style.opacity = '0'; });
+      root.classList.remove('motion-ready');
+      var showAll = function () { items.forEach(function (el) { el.style.opacity = ''; el.style.transform = ''; }); };
+
+      var batch = 0;
+      var batchTimer = null;
+      try {
+        items.forEach(function (el) {
+          M.inView(el, function () {
+            var delay = Math.min(batch, 5) * 0.05;
+            batch += 1;
+            clearTimeout(batchTimer);
+            batchTimer = setTimeout(function () { batch = 0; }, 120);
+            M.animate(el, { opacity: [0, 1], transform: ['translateY(8px)', 'translateY(0px)'] },
+              { duration: 0.4, delay: delay, ease: ease });
+          }, { amount: 0.15 });
+        });
+      } catch (e) {
+        showAll();
+      }
+    })();
+  </script>
 </body>
 
 </html>
